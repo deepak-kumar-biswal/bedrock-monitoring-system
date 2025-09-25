@@ -12,7 +12,6 @@
 - [Architecture](#architecture)
 - [Enhanced Logging Features](#enhanced-logging-features)
 - [Key Features](#key-features)
-- [Monitoring Scope](#monitoring-scope)
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
 - [Detailed Setup](#detailed-setup)
@@ -24,7 +23,6 @@
 - [Cost Optimization](#cost-optimization)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
-- [License](#license)
 
 ## 🎯 Overview
 
@@ -33,7 +31,7 @@ This enhanced monitoring solution for AWS Bedrock provides enterprise-grade obse
 - **Monitor** Bedrock service usage patterns and performance
 - **Audit** user behavior and security events with CloudTrail
 - **Log** model invocations natively with Bedrock's built-in logging
-- **Track** detailed metrics through CloudWatch integration  
+- **Track** detailed metrics through CloudWatch integration
 - **Optimize** costs through detailed usage analytics
 - **Alert** on anomalies and performance issues
 - **Report** to stakeholders with automated insights
@@ -43,7 +41,7 @@ This enhanced monitoring solution for AWS Bedrock provides enterprise-grade obse
 This solution implements a comprehensive three-tier logging strategy:
 
 1. **📋 CloudTrail Logging** - API-level audit trails for security and compliance
-2. **📊 CloudWatch Logging** - Performance metrics and operational insights  
+2. **📊 CloudWatch Logging** - Performance metrics and operational insights
 3. **🎯 Bedrock Native Logging** - Model invocation details with request/response payloads
 
 ### 🏗️ Solution Components
@@ -78,6 +76,7 @@ This solution implements a comprehensive three-tier logging strategy:
 ![Data Flow Diagram](docs/bedrock_data_flow.png)
 
 The solution processes data through multiple stages:
+
 - **Real-time**: API calls, metrics, alerts (< 5 minutes)
 - **Near real-time**: Log aggregation, processing (5-15 minutes)
 - **Batch**: Daily/weekly reports, trend analysis
@@ -88,7 +87,8 @@ The solution processes data through multiple stages:
 
 This solution includes comprehensive **Bedrock Model Invocation Logging** that captures detailed request and response data:
 
-#### What Gets Logged:
+**What Gets Logged:**
+
 - ✅ **Model Invocations**: Every call to Bedrock foundation models
 - ✅ **Request Payloads**: Input prompts, parameters, and configurations
 - ✅ **Response Payloads**: Generated text, tokens used, and metadata
@@ -96,12 +96,14 @@ This solution includes comprehensive **Bedrock Model Invocation Logging** that c
 - ✅ **Error Details**: Failed requests with detailed error messages
 - ✅ **User Context**: Identity, session, and application information
 
-#### Logging Destinations:
+**Logging Destinations:**
+
 - **CloudWatch Logs**: Real-time log streaming and analysis
 - **S3 Bucket**: Long-term storage and compliance archiving
 - **Custom Analytics**: Python-based processing and insights
 
-#### Key Benefits:
+**Key Benefits:**
+
 - 🔍 **Deep Visibility**: See exactly what prompts and responses are being processed
 - 🛡️ **Security Monitoring**: Track sensitive data usage and potential leaks
 - 📊 **Usage Analytics**: Understand how models are being utilized
@@ -111,6 +113,7 @@ This solution includes comprehensive **Bedrock Model Invocation Logging** that c
 ### 📋 CloudTrail Integration
 
 Comprehensive API-level logging for security and compliance:
+
 - All Bedrock API calls (InvokeModel, ListFoundationModels, etc.)
 - Administrative actions (CreateModel, UpdateModel, etc.)
 - User authentication and authorization events
@@ -119,145 +122,7 @@ Comprehensive API-level logging for security and compliance:
 ### 📊 CloudWatch Metrics & Logs
 
 Operational monitoring and performance insights:
-- Real-time metrics dashboards and custom alarms
-- Log aggregation from Lambda functions and applications
-- Performance monitoring and threshold-based alerting
-- Integration with AWS X-Ray for distributed tracing
 
-## ✨ Key Features
-
-#### ✅ **No Lambda Layers Required!**
-
-Our Lambda functions are optimized to use **only built-in libraries** available in AWS Lambda Python 3.12 runtime:
-
-**Available by default:**
-- `boto3` & `botocore` (AWS SDK)
-- `json`, `os`, `datetime`, `logging`
-- `typing`, `statistics`, `collections`
-
-**Dependency Strategy:**
-- **Lambda functions**: Lightweight, built-in libraries only
-- **Local scripts**: Full data science stack (pandas, matplotlib, etc.)
-
-For complete details, see: [`docs/LAMBDA_DEPENDENCIES.md`](docs/LAMBDA_DEPENDENCIES.md)
-
-### Step 5: Lambda Function Deploymentthon-green)](https://www.python.org/)
-[![Monitoring](https://img.shields.io/badge/Monitoring-CloudWatch-yellow)](https://aws.amazon.com/cloudwatch/)
-[![Logging](https://img.shields.io/badge/Logging-Enhanced-purple)](https://docs.aws.amazon.com/bedrock/latest/userguide/model-invocation-logging.html)
-
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Enhanced Logging Features](#enhanced-logging-features)
-- [Key Features](#key-features)
-- [Monitoring Scope](#monitoring-scope)
-- [Prerequisites](#prerequisites)
-- [Quick Start](#quick-start)
-- [Detailed Setup](#detailed-setup)
-- [Dashboard Overview](#dashboard-overview)
-- [Custom Metrics](#custom-metrics)
-- [Alerting](#alerting)
-- [Reporting](#reporting)
-- [Security Considerations](#security-considerations)
-- [Cost Optimization](#cost-optimization)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [License](#license)
-
-## 🎯 Overview
-
-This enhanced monitoring solution for AWS Bedrock provides enterprise-grade observability, security auditing, and cost management capabilities with **triple-layer logging integration**. Designed following AWS Well-Architected Framework principles, it enables organizations to:
-
-- **Monitor** Bedrock service usage patterns and performance
-- **Audit** user behavior and security events with CloudTrail
-- **Log** model invocations natively with Bedrock's built-in logging
-- **Track** detailed metrics through CloudWatch integration  
-- **Optimize** costs through detailed usage analytics
-- **Alert** on anomalies and performance issues
-- **Report** to stakeholders with automated insights
-
-### 🔍 Triple-Layer Logging Architecture
-
-This solution implements a comprehensive three-tier logging strategy:
-
-1. **📋 CloudTrail Logging** - API-level audit trails for security and compliance
-2. **📊 CloudWatch Logging** - Performance metrics and operational insights  
-3. **🎯 Bedrock Native Logging** - Model invocation details with request/response payloads
-
-### 🏗️ Solution Components
-
-| Component | Purpose | Technology |
-|-----------|---------|------------|
-| **Infrastructure** | Core monitoring setup | CloudFormation |
-| **Native Logging** | Bedrock model invocation logs | Bedrock Model Invocation Logging |
-| **API Logging** | Security & compliance auditing | CloudTrail |
-| **Operational Monitoring** | Performance & metrics | CloudWatch |
-| **Dashboards** | Multi-stakeholder views | CloudWatch Dashboards |
-| **Analytics** | Custom metrics & insights | Python + Lambda |
-| **Alerting** | Proactive notifications | SNS + CloudWatch Alarms |
-| **Reporting** | Automated documentation | Python + SES |
-| **Storage** | Log retention & analysis | S3 + CloudWatch Logs |
-
-## 🏛️ Architecture
-
-![Architecture Diagram](docs/bedrock_monitoring_architecture.png)
-
-### Architecture Layers
-
-1. **Application Layer**: Web apps, mobile apps, and API clients
-2. **Bedrock Services**: Runtime API and Foundation Models
-3. **Monitoring Infrastructure**: CloudTrail, CloudWatch, Lambda functions
-4. **Storage Layer**: S3 buckets and CloudWatch Log Groups
-5. **Analytics & Reporting**: Custom analytics and automated reporting
-6. **Dashboard Layer**: Technical, Management, Security, and Cost dashboards
-
-### Data Flow
-
-![Data Flow Diagram](docs/bedrock_data_flow.png)
-
-The solution processes data through multiple stages:
-- **Real-time**: API calls, metrics, alerts (< 5 minutes)
-- **Near real-time**: Log aggregation, processing (5-15 minutes)
-- **Batch**: Daily/weekly reports, trend analysis
-
-## 🔍 Enhanced Logging Features
-
-### 🎯 Bedrock Native Model Invocation Logging
-
-This solution includes comprehensive **Bedrock Model Invocation Logging** that captures detailed request and response data:
-
-#### What Gets Logged:
-- ✅ **Model Invocations**: Every call to Bedrock foundation models
-- ✅ **Request Payloads**: Input prompts, parameters, and configurations
-- ✅ **Response Payloads**: Generated text, tokens used, and metadata
-- ✅ **Performance Metrics**: Latency, throughput, and processing times
-- ✅ **Error Details**: Failed requests with detailed error messages
-- ✅ **User Context**: Identity, session, and application information
-
-#### Logging Destinations:
-- **CloudWatch Logs**: Real-time log streaming and analysis
-- **S3 Bucket**: Long-term storage and compliance archiving
-- **Custom Analytics**: Python-based processing and insights
-
-#### Key Benefits:
-- 🔍 **Deep Visibility**: See exactly what prompts and responses are being processed
-- 🛡️ **Security Monitoring**: Track sensitive data usage and potential leaks
-- 📊 **Usage Analytics**: Understand how models are being utilized
-- 💰 **Cost Attribution**: Precise token usage tracking per user/application
-- 🚨 **Anomaly Detection**: Identify unusual patterns in model usage
-
-### 📋 CloudTrail Integration
-
-Comprehensive API-level logging for security and compliance:
-- All Bedrock API calls (InvokeModel, ListFoundationModels, etc.)
-- Administrative actions (CreateModel, UpdateModel, etc.)
-- User authentication and authorization events
-- Cross-service interactions and dependencies
-
-### 📊 CloudWatch Metrics & Logs
-
-Operational monitoring and performance insights:
 - Real-time metrics dashboards and custom alarms
 - Log aggregation from Lambda functions and applications
 - Performance monitoring and threshold-based alerting
@@ -266,6 +131,7 @@ Operational monitoring and performance insights:
 ## ✨ Key Features
 
 ### 🔍 Comprehensive Monitoring
+
 - **API Usage Tracking**: All Bedrock API calls with detailed metrics
 - **Performance Monitoring**: Response times, throughput, error rates
 - **Token Usage Analytics**: Input/output token consumption by model
@@ -273,6 +139,7 @@ Operational monitoring and performance insights:
 - **Cost Tracking**: Real-time cost estimation and optimization insights
 
 ### 🛡️ Security & Compliance
+
 - **CloudTrail Integration**: Complete audit trail of all API activities
 - **Access Monitoring**: User authentication and authorization tracking
 - **Anomaly Detection**: Unusual usage patterns and security events
@@ -280,67 +147,45 @@ Operational monitoring and performance insights:
 - **Compliance Reporting**: SOC, PCI, HIPAA-ready audit logs
 
 ### 📊 Multi-Stakeholder Dashboards
+
 - **Technical Operations**: Performance metrics, error analysis, system health
 - **Management**: KPIs, trends, ROI analysis, executive summaries
-- **Security**: Threat detection, access monitoring, compliance status
-- **Cost Management**: Usage patterns, cost trends, optimization opportunities
+- **Security**: Access patterns, threat detection, compliance status
+- **Finance**: Cost analysis, budget tracking, usage optimization
 
 ### 🤖 Intelligent Alerting
+
 - **Threshold-based Alerts**: Custom thresholds for all metrics
-- **Anomaly Detection**: ML-powered unusual pattern detection
-- **Escalation Policies**: Multi-tier notification system
-- **Alert Correlation**: Intelligent grouping of related events
+- **Anomaly Detection**: ML-powered unusual pattern identification
+- **Multi-channel Notifications**: Email, SMS, Slack integration
+- **Escalation Policies**: Tiered response for critical issues
+- **Alert Correlation**: Reduce noise through intelligent grouping
 
-## 🎯 Monitoring Scope
+### 📈 Automated Reporting
 
-### Management Perspective KPIs
-- **Business Metrics**
-  - Daily/Monthly Active Users
-  - API Usage Growth Rate
-  - Cost per Transaction
-  - Revenue Attribution
-  - User Adoption Rates
-
-- **Operational Metrics**
-  - Service Availability (99.9% SLA)
-  - Mean Time to Resolution (MTTR)
-  - Customer Satisfaction Score
-  - Operational Cost Efficiency
-
-### Technical Perspective KPIs
-- **Performance Metrics**
-  - API Response Times (p50, p95, p99)
-  - Throughput (requests/second)
-  - Error Rates by Type
-  - Model-specific Performance
-
-- **Infrastructure Metrics**
-  - Lambda Function Performance
-  - CloudWatch Log Ingestion Rates
-  - S3 Storage Utilization
-  - Network Latency
-
-- **Security Metrics**
-  - Failed Authentication Attempts
-  - Unusual Access Patterns
-  - Data Exfiltration Indicators
-  - Compliance Violations
+- **Daily Summaries**: Usage, performance, and cost reports
+- **Weekly Trends**: Analysis of patterns and recommendations
+- **Monthly Executive Reports**: High-level insights for leadership
+- **Custom Reports**: Tailored analytics for specific stakeholders
+- **Compliance Reports**: Automated audit trail documentation
 
 ## 📋 Prerequisites
 
-### AWS Requirements
-- AWS CLI configured with appropriate credentials
-- AWS Account with Bedrock service enabled
-- IAM permissions for CloudFormation, CloudWatch, CloudTrail, S3, Lambda, SNS, SES
+### AWS Account Requirements
+
+- AWS CLI installed and configured
+- Appropriate IAM permissions for CloudFormation, CloudWatch, CloudTrail, S3, Lambda, SNS, SES
 - Verified email address for SES (for reporting)
 
 ### Technical Requirements
+
 - Python 3.10 or higher
 - Git
 - Bash shell (for deployment scripts)
 - jq (JSON processor)
 
 ### Minimum IAM Permissions
+
 ```json
 {
   "Version": "2012-10-17",
@@ -370,12 +215,14 @@ Operational monitoring and performance insights:
 ## 🚀 Quick Start
 
 ### 1. Clone Repository
+
 ```bash
 git clone <repository-url>
-cd bedrock-monitoring
+cd bedrock-monitoring-system
 ```
 
 ### 2. Configure Parameters
+
 ```bash
 # Edit parameters file
 vim cloudformation/parameters.json
@@ -390,6 +237,7 @@ vim cloudformation/parameters.json
 ```
 
 ### 3. Deploy Infrastructure
+
 ```bash
 cd cloudformation
 chmod +x deploy.sh
@@ -397,15 +245,16 @@ chmod +x deploy.sh
 ```
 
 ### 4. Access Dashboards
+
 The deployment will output dashboard URLs. Access them from the AWS CloudWatch console.
 
 ## 🔧 Detailed Setup
 
 ### Step 1: Infrastructure Deployment
 
-#### Deploy Core Infrastructure
+**Deploy Core Infrastructure:**
+
 ```bash
-# Deploy infrastructure stack
 aws cloudformation deploy \
   --template-file cloudformation/bedrock-monitoring-infrastructure.yaml \
   --stack-name bedrock-monitoring-infrastructure \
@@ -414,9 +263,9 @@ aws cloudformation deploy \
   --region us-east-1
 ```
 
-#### Deploy Dashboards
+**Deploy Dashboards:**
+
 ```bash
-# Deploy dashboard stack
 aws cloudformation deploy \
   --template-file cloudformation/bedrock-monitoring-dashboards.yaml \
   --stack-name bedrock-monitoring-dashboards \
@@ -426,20 +275,24 @@ aws cloudformation deploy \
 
 ### Step 2: Enable Bedrock Native Logging
 
-#### Automatic Enablement via CloudFormation
+**Automatic Enablement via CloudFormation:**
+
 The infrastructure deployment automatically configures:
+
 - Bedrock Model Invocation Logging Configuration
 - CloudWatch Log Group for Bedrock logs
 - S3 bucket for long-term log storage
 - IAM roles with necessary permissions
 
-#### Manual Verification & Configuration
+**Manual Verification & Configuration:**
+
 ```bash
 cd python-scripts
 python enable_bedrock_logging.py --enable
 ```
 
 This script will:
+
 - ✅ Verify Bedrock logging configuration
 - ✅ Enable model invocation logging if not already active
 - ✅ Configure log destinations (CloudWatch + S3)
@@ -447,13 +300,15 @@ This script will:
 
 ### Step 3: Python Environment Setup
 
-#### Install Dependencies
+**Install Dependencies:**
+
 ```bash
 cd python-scripts
 pip install -r requirements.txt
 ```
 
-#### Configure Environment Variables
+**Configure Environment Variables:**
+
 ```bash
 export AWS_REGION=us-east-1
 export ENVIRONMENT=prod
@@ -462,9 +317,29 @@ export REPORT_BUCKET=bedrock-monitoring-reports-prod
 export SENDER_EMAIL=noreply@yourcompany.com
 ```
 
-### Step 3: Lambda Function Deployment
+### Step 4: Lambda Dependencies
 
-#### Package and Deploy Custom Metrics Lambda
+#### ✅ **No Lambda Layers Required!**
+
+Our Lambda functions are optimized to use **only built-in libraries** available in AWS Lambda Python 3.12 runtime:
+
+**Available by default:**
+
+- `boto3` & `botocore` (AWS SDK)
+- `json`, `os`, `datetime`, `logging`
+- `typing`, `statistics`, `collections`
+
+**Dependency Strategy:**
+
+- **Lambda functions**: Lightweight, built-in libraries only
+- **Local scripts**: Full data science stack (pandas, matplotlib, etc.)
+
+For complete details, see: [`docs/LAMBDA_DEPENDENCIES.md`](docs/LAMBDA_DEPENDENCIES.md)
+
+### Step 5: Lambda Function Deployment
+
+**Package and Deploy Custom Metrics Lambda:**
+
 ```bash
 # Create deployment package
 zip -r bedrock-monitor.zip bedrock_monitor.py
@@ -478,513 +353,329 @@ aws lambda update-function-code \
 ## 📊 Dashboard Overview
 
 ### 1. Technical Operations Dashboard
+
 **Purpose**: Real-time monitoring for DevOps and SRE teams
 
-**Key Widgets**:
+**Key Widgets:**
+
 - API Calls Overview (Success/Error/Throttle rates)
-- Response Time Metrics (Average, Maximum, p95)
-- Token Usage Trends
-- Model Usage Distribution
-- Error Analysis and Recent Error Logs
-- System Resource Usage
-- Monitoring Function Health
+- Response Time Distribution
+- Token Usage by Model
+- Error Analysis and Troubleshooting
+- System Health Indicators
 
-**Use Cases**:
+**Target Audience:**
+
+- DevOps engineers
+- Site reliability engineers
+- Platform engineers
 - Incident response and troubleshooting
-- Performance optimization
-- Capacity planning
-- SLA monitoring
 
-### 2. Management Dashboard  
-**Purpose**: Executive-level insights and KPIs
+### 2. Management Dashboard
 
-**Key Widgets**:
+**Purpose**: Business metrics and KPIs for leadership
+
+**Key Widgets:**
+
 - Daily API Usage Trends
-- Daily Token Consumption
-- Success Rate Percentage
-- Total Daily Invocations/Errors
-- Hourly Usage by Model
-- Average Response Time vs SLA
-- Top 10 Users by Usage
+- Cost Analysis and Forecasting
+- User Adoption Metrics
+- Performance vs. SLA Tracking
+- ROI and Business Impact Analysis
 
-**Use Cases**:
+**Target Audience:**
+
+- Engineering managers
+- Product managers
+- Business stakeholders
+- Executive leadership
 - Business performance tracking
-- ROI analysis
-- Strategic planning
-- Resource allocation decisions
 
 ### 3. Security Monitoring Dashboard
-**Purpose**: Security threat detection and compliance
 
-**Key Widgets**:
+**Purpose**: Security posture and threat detection
+
+**Key Widgets:**
+
 - External IP Access Attempts
-- Failed Authentication Attempts
-- User Activity Timeline
-- Unusual User Agents
-- Security-Related Errors
-- Most Active IPs
-- Model Management Activities
+- Authentication Failures
+- Unusual Usage Patterns
+- Guardrail Violations
+- Compliance Status Overview
 
-**Use Cases**:
+**Target Audience:**
+
+- Security operations center (SOC)
+- Compliance teams
+- Risk management
+- Information security officers
 - Security incident investigation
-- Compliance auditing
-- Threat detection
-- Access pattern analysis
 
-### 4. Cost and Usage Dashboard
-**Purpose**: Financial optimization and usage analysis
+### 4. Cost & Usage Dashboard
 
-**Key Widgets**:
-- Daily Token Usage Trends
-- Token Distribution by Model
-- Token Usage by User and Model
-- Monthly Token Summaries
-- Cost Estimation Metrics
+**Purpose**: Financial optimization and resource management
 
-**Use Cases**:
-- Cost optimization
-- Budget planning
-- Usage forecasting
-- Chargeback allocation
+**Key Widgets:**
+
+- Daily/Monthly Spend Trends
+- Cost per Token Analysis
+- Usage by Department/Team
+- Budget vs. Actual Tracking
+- Optimization Recommendations
+
+**Target Audience:**
+
+- FinOps teams
+- Finance managers
+- Cost optimization specialists
+- Budget planners
+- Resource allocation teams
 
 ## 📈 Custom Metrics
 
-The solution collects and publishes custom metrics to provide deeper insights:
+### Management Perspective KPIs
 
-### Available Custom Metrics
+| Metric | Description | Target |
+|--------|-------------|--------|
+| **Daily Active Models** | Number of unique models used | Trending up |
+| **Average Response Time** | Mean response time across all calls | < 2 seconds |
+| **Success Rate** | Percentage of successful API calls | > 99.5% |
+| **Cost per Request** | Average cost per API invocation | Decreasing |
+| **User Adoption** | Number of active users/applications | Growing |
+| **Token Efficiency** | Useful output tokens vs. total tokens | > 80% |
 
-| Metric Name | Description | Unit | Dimensions |
-|-------------|-------------|------|------------|
-| `Custom/Bedrock/TokensPerRequest` | Average tokens per API request | Count | Environment, ModelId |
-| `Custom/Bedrock/CostPerRequest` | Estimated cost per API request | None | Environment, ModelId |
-| `Custom/Bedrock/UniqueUsers` | Number of unique users per hour | Count | Environment |
-| `Custom/Bedrock/ModelSwitchRate` | Rate of model switching by users | Percent | Environment |
-| `Custom/Bedrock/AnomalyScore` | Anomaly detection score | None | Environment, MetricType |
+### Technical Operations Metrics
 
-### Metric Collection Process
-
-```python
-# Example usage of BedrockMonitor
-from bedrock_monitor import BedrockMonitor
-
-monitor = BedrockMonitor(region_name='us-east-1')
-
-# Collect usage metrics
-metrics = monitor.collect_usage_metrics(start_time, end_time)
-
-# Detect anomalies
-anomalies = monitor.detect_anomalies(threshold_multiplier=2.0)
-
-# Publish custom metrics
-monitor.publish_custom_metrics(metrics)
-```
+| Metric | Description | Alert Threshold |
+|--------|-------------|----------------|
+| **Error Rate** | Failed requests per minute | > 1% |
+| **Throttling Rate** | Rate-limited requests | > 0.1% |
+| **Latency P99** | 99th percentile response time | > 5 seconds |
+| **Token Consumption** | Tokens processed per hour | Anomaly detection |
+| **Concurrent Users** | Simultaneous active sessions | > 1000 |
+| **Data Transfer** | Bytes transferred per hour | Anomaly detection |
 
 ## 🚨 Alerting
 
-### Alert Types
+### Critical Alerts (Immediate Response)
 
-#### 1. Performance Alerts
-- **High Error Rate**: > 5% error rate sustained for 10 minutes
-- **High Latency**: Average response time > 30 seconds
-- **Low Success Rate**: < 95% success rate
-- **High Token Usage**: Token usage exceeds 150% of baseline
+- **Service Availability**: Bedrock API unavailable
+- **High Error Rate**: >5% errors in 5-minute window
+- **Security Incident**: Unauthorized access attempts
+- **Cost Spike**: >200% increase in hourly spend
+- **System Failure**: Infrastructure component down
 
-#### 2. Security Alerts
-- **Unusual Access Patterns**: Access from new geographical locations
-- **Failed Authentication Spike**: > 10 failed attempts in 5 minutes
-- **Suspicious User Agents**: Non-standard or potentially malicious user agents
-- **Model Management Changes**: Unauthorized model modifications
+### Warning Alerts (Next Business Day)
 
-#### 3. Cost Alerts
-- **Budget Threshold**: Monthly costs exceed 80% of budget
-- **Usage Spike**: Token usage exceeds 200% of daily average
-- **Unexpected Model Usage**: Usage of expensive models without approval
+- **Performance Degradation**: Response times >3 seconds
+- **Budget Threshold**: 80% of monthly budget reached
+- **Unusual Patterns**: Anomalous usage detected
+- **Compliance Issues**: Policy violations identified
+- **Resource Limits**: Approaching service quotas
 
-#### 4. Operational Alerts
-- **Service Unavailability**: Bedrock API returning 5xx errors
-- **Monitoring Function Errors**: Custom monitoring Lambda failures
-- **Log Ingestion Issues**: CloudWatch Logs ingestion failures
+### Informational Alerts (Weekly Summary)
 
-### Alert Configuration
+- **Usage Trends**: Weekly usage summary
+- **Cost Optimization**: Potential savings identified
+- **Performance Report**: System performance summary
+- **Security Summary**: Security posture update
+- **Compliance Status**: Regulatory compliance report
 
-```bash
-# Example: Create custom alert
-aws cloudwatch put-metric-alarm \
-  --alarm-name "Bedrock-Token-Usage-Spike" \
-  --alarm-description "Alert when token usage spikes" \
-  --metric-name "InputTokens" \
-  --namespace "AWS/Bedrock" \
-  --statistic "Sum" \
-  --period 300 \
-  --threshold 10000 \
-  --comparison-operator "GreaterThanThreshold" \
-  --evaluation-periods 2 \
-  --alarm-actions "arn:aws:sns:us-east-1:123456789012:bedrock-alerts"
-```
+## 📋 Reporting
 
-## 📄 Reporting
+### Automated Reports
 
-### Automated Report Types
+| Report Type | Frequency | Recipients | Content |
+|-------------|-----------|------------|---------|
+| **Daily Operations** | Daily | DevOps, SRE | System health, errors, performance |
+| **Weekly Business** | Weekly | Management | Usage trends, costs, KPIs |
+| **Monthly Executive** | Monthly | Leadership | ROI, strategic insights, forecasts |
+| **Quarterly Compliance** | Quarterly | Compliance | Audit trails, policy adherence |
+| **Annual Review** | Yearly | All stakeholders | Comprehensive analysis, planning |
 
-#### 1. Executive Summary Report
-**Frequency**: Weekly
-**Recipients**: C-level executives, business stakeholders
-**Content**:
-- High-level KPIs and trends
-- ROI analysis
-- Strategic recommendations
-- Budget and cost analysis
+### Custom Reporting
 
-#### 2. Technical Performance Report
-**Frequency**: Daily
-**Recipients**: DevOps, SRE, Engineering teams
-**Content**:
-- Detailed performance metrics
-- Error analysis and root cause
-- Capacity utilization
-- Performance optimization recommendations
-
-#### 3. Security Audit Report
-**Frequency**: Weekly
-**Recipients**: Security team, compliance officers
-**Content**:
-- Security events summary
-- Access pattern analysis
-- Compliance status
-- Risk assessment
-
-#### 4. Cost Optimization Report
-**Frequency**: Monthly
-**Recipients**: Finance, engineering managers
-**Content**:
-- Detailed cost breakdown
-- Usage efficiency analysis
-- Optimization opportunities
-- Budget vs actual comparison
-
-### Report Generation
-
-```python
-# Example: Generate technical report
-from bedrock_reporter import BedrockReporter
-
-reporter = BedrockReporter(region_name='us-east-1')
-
-# Generate weekly technical report
-technical_report = reporter.create_technical_report(days_back=7)
-
-# Send to stakeholders
-recipients = ['devops@company.com', 'sre@company.com']
-reporter.send_report(technical_report, recipients, "Weekly Bedrock Technical Report")
-
-# Save to S3
-reporter.save_report_to_s3(technical_report, "weekly-technical-report")
-```
+- **On-demand Analytics**: Generate reports for specific time periods
+- **Incident Reports**: Detailed analysis of service disruptions
+- **Capacity Planning**: Resource utilization and scaling recommendations
+- **Security Assessments**: Threat analysis and mitigation strategies
+- **Cost Analysis**: Detailed spending breakdown and optimization opportunities
 
 ## 🔒 Security Considerations
 
 ### Data Protection
-- **Encryption at Rest**: All S3 buckets use AES-256 encryption
-- **Encryption in Transit**: All data transfer uses TLS 1.2+
-- **Access Control**: IAM roles with least privilege principles
-- **Log Retention**: Configurable retention periods for compliance
 
-### Privacy and Compliance
-- **PII Handling**: No PII is logged or stored
-- **Data Residency**: All data remains in specified AWS region
-- **Audit Trail**: Complete CloudTrail logging for compliance
-- **Access Logging**: All dashboard and report access is logged
+- **Encryption at Rest**: All logs and data encrypted using AWS KMS
+- **Encryption in Transit**: TLS 1.2+ for all communications
+- **Access Control**: Role-based access with least privilege principle
+- **Data Classification**: Sensitive data identification and protection
+- **Retention Policies**: Automated data lifecycle management
 
-### Security Best Practices Implemented
-- **VPC Integration**: Optional VPC deployment for network isolation
-- **Resource-based Policies**: Fine-grained access control
-- **CloudFormation Drift Detection**: Infrastructure integrity monitoring
-- **Secret Management**: AWS Secrets Manager for sensitive data
+### Network Security
+
+- **VPC Endpoints**: Private connectivity to AWS services
+- **Security Groups**: Restrictive firewall rules
+- **NACLs**: Network-level access control
+- **WAF Integration**: Web application firewall protection
+- **DDoS Protection**: AWS Shield integration
+
+### Compliance Framework
+
+- **SOC 2**: Security, availability, processing integrity, confidentiality, privacy
+- **PCI DSS**: Payment card industry data security standards
+- **HIPAA**: Healthcare information privacy and security
+- **GDPR**: General data protection regulation compliance
+- **FedRAMP**: Federal risk and authorization management program
 
 ## 💰 Cost Optimization
 
-### Cost Structure
+### Monitoring & Analysis
 
-#### Monthly Cost Estimate (for typical usage)
-| Service | Usage | Cost |
-|---------|--------|------|
-| CloudWatch Logs | 100GB ingested | $50 |
-| CloudWatch Metrics | 1000 custom metrics | $30 |
-| CloudWatch Dashboards | 4 dashboards | $12 |
-| CloudTrail | Data events enabled | $20 |
-| Lambda | 100,000 executions | $20 |
-| S3 Storage | 500GB (logs + reports) | $12 |
-| SNS | 1000 notifications | $2 |
-| **Total Estimated** | | **$146/month** |
+- **Real-time Cost Tracking**: Monitor spending as it occurs
+- **Budget Alerts**: Proactive notifications before overspending
+- **Usage Analytics**: Identify optimization opportunities
+- **Resource Tagging**: Detailed cost allocation and chargeback
+- **Trend Analysis**: Historical spending patterns and forecasting
 
-### Cost Optimization Strategies
+### Optimization Strategies
 
-#### 1. Log Retention Optimization
-```yaml
-# Adjust retention periods based on compliance requirements
-CloudWatchLogRetentionDays: 30  # Reduce for cost savings
-CloudTrailRetentionDays: 90     # Increase for compliance
-```
+| Strategy | Description | Potential Savings |
+|----------|-------------|------------------|
+| **Right-sizing Models** | Use appropriate model for each use case | 20-40% |
+| **Prompt Optimization** | Reduce token usage through better prompts | 15-30% |
+| **Batch Processing** | Group requests for efficiency | 10-25% |
+| **Caching Results** | Avoid redundant API calls | 25-50% |
+| **Usage Scheduling** | Time-based resource allocation | 10-20% |
+| **Reserved Capacity** | Commit to usage for discounts | 10-30% |
 
-#### 2. Metric Filtering
-```python
-# Filter high-volume metrics to reduce costs
-def should_publish_metric(metric_name, value):
-    # Only publish non-zero metrics
-    if value == 0:
-        return False
-    # Skip frequent low-value metrics
-    if metric_name == 'low_priority_metric' and value < threshold:
-        return False
-    return True
-```
+### Cost Controls
 
-#### 3. Storage Lifecycle Management
-```yaml
-# Automatically transition old data to cheaper storage
-LifecycleConfiguration:
-  Rules:
-    - Status: Enabled
-      Transitions:
-        - Days: 30
-          StorageClass: STANDARD_IA
-        - Days: 90
-          StorageClass: GLACIER
-```
+- **Budget Enforcement**: Automatic spending limits
+- **Resource Quotas**: Prevent runaway usage
+- **Approval Workflows**: Governance for high-cost operations
+- **Cost Allocation**: Department/project-based billing
+- **Regular Reviews**: Monthly cost optimization sessions
 
-## 🔧 Troubleshooting
+## 🛠️ Troubleshooting
 
-### Common Issues and Solutions
+### Common Issues
 
 #### 1. CloudFormation Deployment Failures
 
-**Issue**: Stack deployment fails with IAM permissions error
-```
-The role defined for the function cannot be assumed by Lambda
-```
+**Symptom**: Stack creation fails with permission errors
 
 **Solution**:
 ```bash
 # Verify IAM permissions
+aws iam get-user
 aws sts get-caller-identity
 
 # Check CloudFormation events
 aws cloudformation describe-stack-events --stack-name bedrock-monitoring-infrastructure
 ```
 
-#### 2. Lambda Function Errors
+#### 2. Lambda Function Timeouts
 
-**Issue**: Custom metrics Lambda function timing out
-```
-Task timed out after 300.00 seconds
-```
-
-**Solution**:
-```yaml
-# Increase timeout in CloudFormation template
-Timeout: 900  # 15 minutes
-
-# Or reduce data processing scope
-def collect_metrics(hours_back=1):  # Reduce from 24 to 1 hour
-```
-
-#### 3. Dashboard Data Not Showing
-
-**Issue**: Dashboard widgets showing "No data available"
+**Symptom**: Lambda functions timing out during execution
 
 **Solution**:
 ```bash
-# Verify CloudWatch metrics exist
+# Increase timeout in CloudFormation template
+Timeout: 300  # 5 minutes
+
+# Check CloudWatch logs
+aws logs describe-log-groups --log-group-name-prefix "/aws/lambda/bedrock"
+```
+
+#### 3. Missing Bedrock Logs
+
+**Symptom**: No logs appearing in CloudWatch
+
+**Solution**:
+```bash
+# Verify logging configuration
+python python-scripts/enable_bedrock_logging.py --verify
+
+# Check IAM roles and permissions
+aws iam get-role --role-name BedrockLoggingRole
+```
+
+#### 4. Dashboard Not Loading
+
+**Symptom**: CloudWatch dashboards show no data
+
+**Solution**:
+```bash
+# Verify metrics are being generated
 aws cloudwatch list-metrics --namespace AWS/Bedrock
 
-# Check log group permissions
-aws logs describe-log-groups --log-group-name-prefix /aws/bedrock
+# Check dashboard configuration
+aws cloudwatch get-dashboard --dashboard-name "Bedrock-Technical-Operations"
 ```
 
-#### 4. High CloudWatch Costs
+### Support Resources
 
-**Issue**: Unexpected high CloudWatch bills
-
-**Solution**:
-```python
-# Implement metric sampling
-import random
-
-def should_publish_sample(sample_rate=0.1):
-    return random.random() < sample_rate
-
-# Use in metric publishing
-if should_publish_sample():
-    publish_metric(metric_name, value)
-```
-
-### Debug Mode
-
-Enable debug logging for troubleshooting:
-
-```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
-
-# Run monitoring with verbose output
-monitor = BedrockMonitor()
-monitor.collect_usage_metrics(start_time, end_time)
-```
-
-### Health Checks
-
-Monitor solution health with these commands:
-
-```bash
-# Check CloudFormation stack status
-aws cloudformation describe-stacks --stack-name bedrock-monitoring-infrastructure
-
-# Verify Lambda function health
-aws lambda invoke --function-name bedrock-custom-metrics-prod response.json
-
-# Check recent CloudWatch metrics
-aws cloudwatch get-metric-statistics \
-  --namespace Custom/Bedrock \
-  --metric-name TokensPerRequest \
-  --start-time $(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%S) \
-  --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
-  --period 300 \
-  --statistics Average
-```
+- **Documentation**: Comprehensive guides in `/docs` folder
+- **Log Analysis**: CloudWatch Insights queries for troubleshooting
+- **Community Support**: GitHub issues and discussions
+- **Professional Services**: AWS consulting and support options
 
 ## 🤝 Contributing
 
 We welcome contributions to improve this monitoring solution!
 
 ### Development Setup
-```bash
-# Clone repository
-git clone <repository-url>
-cd bedrock-monitoring
 
-# Set up Python environment
+```bash
+# Clone the repository
+git clone <repository-url>
+cd bedrock-monitoring-system
+
+# Set up development environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r python-scripts/requirements.txt
 
-# Install development dependencies
-pip install pytest black flake8 moto
-```
-
-### Running Tests
-```bash
-# Run unit tests
-cd python-scripts
-python -m pytest tests/
-
-# Run linting
-black *.py
-flake8 *.py
+# Install development tools
+pip install pytest black flake8
 ```
 
 ### Contribution Guidelines
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass
-6. Commit changes (`git commit -m 'Add amazing feature'`)
-7. Push to branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
 
 ### Code Standards
-- Follow PEP 8 for Python code
-- Use CloudFormation best practices for infrastructure
-- Include comprehensive error handling
-- Add logging for debugging
-- Update documentation for new features
 
-## 📝 License
+- Follow PEP 8 for Python code
+- Use meaningful variable and function names
+- Add comprehensive documentation
+- Include unit tests for new features
+- Ensure CloudFormation templates validate
+
+### Testing
+
+```bash
+# Run Python tests
+pytest python-scripts/tests/
+
+# Validate CloudFormation templates
+aws cloudformation validate-template --template-body file://cloudformation/bedrock-monitoring-infrastructure.yaml
+
+# Check code formatting
+black python-scripts/
+flake8 python-scripts/
+```
+
+---
+
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
-
-### Documentation
-- [AWS Bedrock Documentation](https://docs.aws.amazon.com/bedrock/)
-- [CloudWatch User Guide](https://docs.aws.amazon.com/cloudwatch/)
-- [CloudFormation User Guide](https://docs.aws.amazon.com/cloudformation/)
-
-### Community Support
-- [AWS Forums](https://forums.aws.amazon.com/)
-- [Stack Overflow](https://stackoverflow.com/questions/tagged/aws-bedrock)
-- [GitHub Issues](../../issues)
-
-### Professional Support
-For enterprise support and customization services, contact your AWS Solutions Architect or partner.
-
 ---
 
-## 📊 Appendix
-
-### A. CloudWatch Metrics Reference
-
-#### AWS/Bedrock Namespace Metrics
-| Metric | Description | Unit | Dimensions |
-|--------|-------------|------|------------|
-| Invocations | Number of API calls | Count | ModelId |
-| Errors | Number of failed API calls | Count | ModelId, ErrorType |
-| Duration | Response time | Milliseconds | ModelId |
-| InputTokens | Input tokens processed | Count | ModelId |
-| OutputTokens | Output tokens generated | Count | ModelId |
-| Throttles | Number of throttled requests | Count | ModelId |
-
-### B. Log Group Structure
-
-```
-/aws/bedrock/
-├── application-logs/{environment}/
-│   ├── api-calls
-│   ├── model-invocations
-│   └── user-sessions
-├── cloudtrail-logs/{environment}/
-│   ├── data-events
-│   └── management-events
-├── model-invocations/{environment}/
-│   ├── request-logs
-│   ├── response-logs
-│   └── error-logs
-└── security-events/{environment}/
-    ├── authentication
-    ├── authorization
-    └── access-patterns
-```
-
-### C. Environment Variables Reference
-
-| Variable | Description | Default | Required |
-|----------|-------------|---------|-----------|
-| AWS_REGION | AWS region for deployment | us-east-1 | Yes |
-| ENVIRONMENT | Environment name (dev/staging/prod) | prod | Yes |
-| SNS_TOPIC_ARN | SNS topic for alerts | - | Yes |
-| REPORT_BUCKET | S3 bucket for reports | - | No |
-| SENDER_EMAIL | Verified SES email for reports | - | No |
-| TECH_TEAM_EMAILS | Comma-separated email list | - | No |
-| ENABLE_DEBUG_LOGGING | Enable verbose logging | false | No |
-
-### D. API Reference
-
-#### BedrockMonitor Class Methods
-
-```python
-class BedrockMonitor:
-    def __init__(self, region_name: str = 'us-east-1')
-    def get_available_models(self) -> List[Dict[str, Any]]
-    def collect_usage_metrics(self, start_time: datetime, end_time: datetime) -> Dict[str, Any]
-    def analyze_user_behavior(self, hours_back: int = 24) -> Dict[str, Any]
-    def detect_anomalies(self, threshold_multiplier: float = 2.0) -> List[Dict[str, Any]]
-    def generate_cost_analysis(self, days_back: int = 30) -> Dict[str, Any]
-    def send_alert(self, message: str, subject: str = "Bedrock Monitoring Alert") -> bool
-    def publish_custom_metrics(self, metrics: Dict[str, Any]) -> bool
-```
-
----
-
-**🎉 Congratulations! You now have a comprehensive AWS Bedrock monitoring solution that provides enterprise-grade observability, security auditing, and cost management capabilities.**
-
-For the latest updates and additional resources, visit our [GitHub repository](../../) and star ⭐ the project if you find it useful!
+**Built with ❤️ for AWS Bedrock monitoring and observability**
