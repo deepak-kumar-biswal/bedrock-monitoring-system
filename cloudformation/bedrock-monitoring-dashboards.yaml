@@ -1,0 +1,583 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Bedrock Monitoring Dashboards - Technical, Management, and Security Views'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    Description: Environment name for resource tagging
+
+  InfrastructureStackName:
+    Type: String
+    Description: Name of the infrastructure CloudFormation stack
+    Default: bedrock-monitoring-infrastructure
+
+Resources:
+  # Technical Operations Dashboard
+  BedrockTechnicalDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub 'Bedrock-Technical-Operations-${Environment}'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Bedrock", "Invocations", { "stat": "Sum" } ],
+                  [ ".", "Errors", { "stat": "Sum" } ],
+                  [ ".", "Throttles", { "stat": "Sum" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Bedrock API Calls Overview",
+                "period": 300,
+                "yAxis": {
+                  "left": {
+                    "min": 0
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Bedrock", "Duration", { "stat": "Average" } ],
+                  [ ".", "Duration", { "stat": "Maximum" } ],
+                  [ ".", "Duration", { "stat": "p95" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Response Time Metrics",
+                "period": 300,
+                "yAxis": {
+                  "left": {
+                    "min": 0
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 6,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Bedrock", "InputTokens", { "stat": "Sum" } ],
+                  [ ".", "OutputTokens", { "stat": "Sum" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Token Usage",
+                "period": 300
+              }
+            },
+            {
+              "type": "metric",
+              "x": 8,
+              "y": 6,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Bedrock", "Invocations", "ModelId", "anthropic.claude-v2" ],
+                  [ "...", "amazon.titan-text-express-v1" ],
+                  [ "...", "ai21.j2-ultra-v1" ],
+                  [ "...", "cohere.command-text-v14" ]
+                ],
+                "view": "pie",
+                "region": "${AWS::Region}",
+                "title": "Model Usage Distribution",
+                "period": 3600
+              }
+            },
+            {
+              "type": "metric",
+              "x": 16,
+              "y": 6,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Bedrock", "Errors", "ErrorType", "ClientError" ],
+                  [ "...", "ServerError" ],
+                  [ "...", "ThrottlingError" ],
+                  [ "...", "ValidationError" ]
+                ],
+                "view": "pie",
+                "region": "${AWS::Region}",
+                "title": "Error Distribution",
+                "period": 3600
+              }
+            },
+            {
+              "type": "log",
+              "x": 0,
+              "y": 12,
+              "width": 24,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '/aws/bedrock/model-invocations/${Environment}'\n| fields @timestamp, modelId, inputTokens, outputTokens, requestId\n| filter @message like /ERROR/\n| sort @timestamp desc\n| limit 20",
+                "region": "${AWS::Region}",
+                "title": "Recent Error Logs",
+                "view": "table"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 18,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "CWAgent", "Memory % Committed Bytes In Use", "InstanceId", "i-1234567890abcdef0" ],
+                  [ ".", "Processor % Processor Time", ".", "." ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "System Resource Usage",
+                "period": 300
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 18,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Lambda", "Duration", "FunctionName", "bedrock-custom-metrics-${Environment}" ],
+                  [ ".", "Errors", ".", "." ],
+                  [ ".", "Invocations", ".", "." ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Monitoring Function Health",
+                "period": 300
+              }
+            }
+          ]
+        }
+
+  # Management Dashboard
+  BedrockManagementDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub 'Bedrock-Management-Overview-${Environment}'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Bedrock", "Invocations", { "stat": "Sum", "period": 86400 } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Daily API Usage Trend",
+                "period": 86400,
+                "yAxis": {
+                  "left": {
+                    "min": 0
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Bedrock", "InputTokens", { "stat": "Sum", "period": 86400 } ],
+                  [ ".", "OutputTokens", { "stat": "Sum", "period": 86400 } ]
+                ],
+                "view": "timeSeries",
+                "stacked": true,
+                "region": "${AWS::Region}",
+                "title": "Daily Token Consumption",
+                "period": 86400
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 6,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "view": "singleValue",
+                "stacked": false,
+                "metrics": [
+                  [ "AWS/Bedrock", "Invocations", { "stat": "Sum", "period": 86400 } ]
+                ],
+                "region": "${AWS::Region}",
+                "title": "Total Daily Invocations",
+                "period": 86400
+              }
+            },
+            {
+              "type": "metric",
+              "x": 8,
+              "y": 6,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "view": "singleValue",
+                "stacked": false,
+                "metrics": [
+                  [ "AWS/Bedrock", "Errors", { "stat": "Sum", "period": 86400 } ]
+                ],
+                "region": "${AWS::Region}",
+                "title": "Total Daily Errors",
+                "period": 86400
+              }
+            },
+            {
+              "type": "metric",
+              "x": 16,
+              "y": 6,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "view": "singleValue",
+                "stacked": false,
+                "metrics": [
+                  [ { "expression": "m1/m2*100", "label": "Success Rate %" } ],
+                  [ "AWS/Bedrock", "Invocations", { "id": "m1", "visible": false } ],
+                  [ ".", "Errors", { "id": "m2", "visible": false } ]
+                ],
+                "region": "${AWS::Region}",
+                "title": "Success Rate %",
+                "period": 86400
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 12,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Bedrock", "Invocations", "ModelId", "anthropic.claude-v2", { "stat": "Sum", "period": 3600 } ],
+                  [ "...", "amazon.titan-text-express-v1", { "stat": "Sum", "period": 3600 } ],
+                  [ "...", "ai21.j2-ultra-v1", { "stat": "Sum", "period": 3600 } ],
+                  [ "...", "cohere.command-text-v14", { "stat": "Sum", "period": 3600 } ]
+                ],
+                "view": "timeSeries",
+                "stacked": true,
+                "region": "${AWS::Region}",
+                "title": "Hourly Usage by Model",
+                "period": 3600
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 12,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Bedrock", "Duration", { "stat": "Average", "period": 3600 } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Average Response Time Trend",
+                "period": 3600,
+                "annotations": {
+                  "horizontal": [
+                    {
+                      "label": "SLA Threshold",
+                      "value": 30000
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "log",
+              "x": 0,
+              "y": 18,
+              "width": 24,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '/aws/bedrock/application-logs/${Environment}'\n| fields @timestamp, userId, modelId, requestId, inputTokens, outputTokens\n| stats sum(inputTokens) as totalInput, sum(outputTokens) as totalOutput, count() as requests by userId\n| sort requests desc\n| limit 10",
+                "region": "${AWS::Region}",
+                "title": "Top 10 Users by Usage",
+                "view": "table"
+              }
+            }
+          ]
+        }
+
+  # Security Dashboard
+  BedrockSecurityDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub 'Bedrock-Security-Monitoring-${Environment}'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "log",
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '/aws/bedrock/security-events/${Environment}'\n| fields @timestamp, sourceIPAddress, userIdentity.type, eventName, errorCode\n| filter sourceIPAddress not like /^10\\./\n| filter sourceIPAddress not like /^172\\.(1[6-9]|2[0-9]|3[0-1])\\./\n| filter sourceIPAddress not like /^192\\.168\\./\n| stats count() as attempts by sourceIPAddress\n| sort attempts desc\n| limit 10",
+                "region": "${AWS::Region}",
+                "title": "External IP Access Attempts",
+                "view": "table"
+              }
+            },
+            {
+              "type": "log",
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '/aws/bedrock/security-events/${Environment}'\n| fields @timestamp, userIdentity.type, userIdentity.userName, eventName, errorCode\n| filter errorCode exists\n| stats count() as failedAttempts by userIdentity.userName\n| sort failedAttempts desc\n| limit 10",
+                "region": "${AWS::Region}",
+                "title": "Failed Authentication Attempts",
+                "view": "table"
+              }
+            },
+            {
+              "type": "log",
+              "x": 0,
+              "y": 6,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '/aws/bedrock/security-events/${Environment}'\n| fields @timestamp, userIdentity.userName, eventName, sourceIPAddress\n| filter eventName like /Bedrock/\n| stats count() as apiCalls by userIdentity.userName, bin(5m)\n| sort @timestamp desc",
+                "region": "${AWS::Region}",
+                "title": "User Activity Timeline",
+                "view": "table"
+              }
+            },
+            {
+              "type": "log",
+              "x": 12,
+              "y": 6,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '/aws/bedrock/security-events/${Environment}'\n| fields @timestamp, sourceIPAddress, userAgent, eventName\n| filter userAgent not like /aws-cli/ and userAgent not like /aws-sdk/\n| stats count() as requests by userAgent\n| sort requests desc\n| limit 10",
+                "region": "${AWS::Region}",
+                "title": "Unusual User Agents",
+                "view": "table"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 12,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Bedrock", "Errors", "ErrorType", "ClientError", { "stat": "Sum" } ],
+                  [ "...", "ServerError", { "stat": "Sum" } ],
+                  [ "...", "ThrottlingError", { "stat": "Sum" } ],
+                  [ "...", "ValidationError", { "stat": "Sum" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": true,
+                "region": "${AWS::Region}",
+                "title": "Security-Related Errors",
+                "period": 300
+              }
+            },
+            {
+              "type": "log",
+              "x": 12,
+              "y": 12,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '/aws/bedrock/security-events/${Environment}'\n| fields @timestamp, sourceIPAddress, eventName, requestParameters.modelId\n| filter @timestamp > @timestamp - 1h\n| stats count() as recentRequests by sourceIPAddress\n| sort recentRequests desc\n| limit 5",
+                "region": "${AWS::Region}",
+                "title": "Most Active IPs (Last Hour)",
+                "view": "table"
+              }
+            },
+            {
+              "type": "log",
+              "x": 0,
+              "y": 18,
+              "width": 24,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '/aws/bedrock/security-events/${Environment}'\n| fields @timestamp, eventName, sourceIPAddress, userIdentity.userName, responseElements.result\n| filter eventName like /CreateModelCustomization/ or eventName like /DeleteModel/ or eventName like /PutModel/\n| sort @timestamp desc\n| limit 20",
+                "region": "${AWS::Region}",
+                "title": "Model Management Activities",
+                "view": "table"
+              }
+            }
+          ]
+        }
+
+  # Cost and Usage Dashboard
+  BedrockCostDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub 'Bedrock-Cost-Usage-${Environment}'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Bedrock", "InputTokens", { "stat": "Sum", "period": 86400 } ],
+                  [ ".", "OutputTokens", { "stat": "Sum", "period": 86400 } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Daily Token Usage Trends",
+                "period": 86400
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Bedrock", "InputTokens", "ModelId", "anthropic.claude-v2", { "stat": "Sum" } ],
+                  [ "...", "amazon.titan-text-express-v1", { "stat": "Sum" } ],
+                  [ "...", "ai21.j2-ultra-v1", { "stat": "Sum" } ],
+                  [ "...", "cohere.command-text-v14", { "stat": "Sum" } ]
+                ],
+                "view": "pie",
+                "region": "${AWS::Region}",
+                "title": "Token Distribution by Model",
+                "period": 86400
+              }
+            },
+            {
+              "type": "log",
+              "x": 0,
+              "y": 6,
+              "width": 24,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '/aws/bedrock/application-logs/${Environment}'\n| fields @timestamp, userId, modelId, inputTokens, outputTokens\n| stats sum(inputTokens) as totalInputTokens, sum(outputTokens) as totalOutputTokens, count() as totalRequests by userId, modelId\n| sort totalInputTokens desc\n| limit 20",
+                "region": "${AWS::Region}",
+                "title": "Token Usage by User and Model",
+                "view": "table"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 12,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "view": "singleValue",
+                "stacked": false,
+                "metrics": [
+                  [ "AWS/Bedrock", "InputTokens", { "stat": "Sum", "period": 2592000 } ]
+                ],
+                "region": "${AWS::Region}",
+                "title": "Monthly Input Tokens",
+                "period": 2592000
+              }
+            },
+            {
+              "type": "metric",
+              "x": 8,
+              "y": 12,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "view": "singleValue",
+                "stacked": false,
+                "metrics": [
+                  [ "AWS/Bedrock", "OutputTokens", { "stat": "Sum", "period": 2592000 } ]
+                ],
+                "region": "${AWS::Region}",
+                "title": "Monthly Output Tokens",
+                "period": 2592000
+              }
+            },
+            {
+              "type": "metric",
+              "x": 16,
+              "y": 12,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "view": "singleValue",
+                "stacked": false,
+                "metrics": [
+                  [ "AWS/Bedrock", "Invocations", { "stat": "Sum", "period": 2592000 } ]
+                ],
+                "region": "${AWS::Region}",
+                "title": "Monthly Invocations",
+                "period": 2592000
+              }
+            }
+          ]
+        }
+
+Outputs:
+  TechnicalDashboard:
+    Description: 'CloudWatch Dashboard for Technical Operations'
+    Value: !Sub 'https://console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${BedrockTechnicalDashboard}'
+
+  ManagementDashboard:
+    Description: 'CloudWatch Dashboard for Management Overview'
+    Value: !Sub 'https://console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${BedrockManagementDashboard}'
+
+  SecurityDashboard:
+    Description: 'CloudWatch Dashboard for Security Monitoring'
+    Value: !Sub 'https://console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${BedrockSecurityDashboard}'
+
+  CostDashboard:
+    Description: 'CloudWatch Dashboard for Cost and Usage'
+    Value: !Sub 'https://console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${BedrockCostDashboard}'

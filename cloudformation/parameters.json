@@ -1,0 +1,22 @@
+[
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "dev"
+  },
+  {
+    "ParameterKey": "CloudTrailRetentionDays", 
+    "ParameterValue": "90"
+  },
+  {
+    "ParameterKey": "CloudWatchLogRetentionDays",
+    "ParameterValue": "30"
+  },
+  {
+    "ParameterKey": "AlertEmail",
+    "ParameterValue": "admin@company.com"
+  },
+  {
+    "ParameterKey": "EnableDetailedMonitoring",
+    "ParameterValue": "true"
+  }
+]

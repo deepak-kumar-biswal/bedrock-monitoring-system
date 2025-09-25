@@ -1,0 +1,306 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Bedrock Comprehensive Monitoring Solution - Infrastructure Components'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    Description: Environment name for resource tagging
+
+  CloudTrailRetentionDays:
+    Type: Number
+    Default: 90
+    Description: CloudTrail log retention period in days
+
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Default: 30
+    Description: CloudWatch log retention period in days
+
+  AlertEmail:
+    Type: String
+    Description: Email address for monitoring alerts
+    AllowedPattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+
+  EnableDetailedMonitoring:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+    Description: Enable detailed monitoring metrics
+
+Resources:
+  # S3 Bucket for CloudTrail logs
+  BedrockCloudTrailBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'bedrock-monitoring-cloudtrail-${Environment}-${AWS::AccountId}'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldLogs
+            Status: Enabled
+            ExpirationInDays: !Ref CloudTrailRetentionDays
+      NotificationConfiguration:
+        CloudWatchConfigurations:
+          - Event: s3:ObjectCreated:*
+            CloudWatchConfiguration:
+              LogGroupName: !Ref BedrockCloudTrailLogGroup
+
+  # CloudTrail S3 Bucket Policy
+  BedrockCloudTrailBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref BedrockCloudTrailBucket
+      PolicyDocument:
+        Statement:
+          - Sid: AWSCloudTrailAclCheck
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: s3:GetBucketAcl
+            Resource: !GetAtt BedrockCloudTrailBucket.Arn
+            Condition:
+              StringEquals:
+                'AWS:SourceArn': !Sub 'arn:aws:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/bedrock-monitoring-trail'
+          - Sid: AWSCloudTrailWrite
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Sub '${BedrockCloudTrailBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                's3:x-amz-acl': bucket-owner-full-control
+                'AWS:SourceArn': !Sub 'arn:aws:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/bedrock-monitoring-trail'
+
+  # CloudTrail for Bedrock API calls
+  BedrockCloudTrail:
+    Type: AWS::CloudTrail::Trail
+    DependsOn: BedrockCloudTrailBucketPolicy
+    Properties:
+      TrailName: bedrock-monitoring-trail
+      S3BucketName: !Ref BedrockCloudTrailBucket
+      IncludeGlobalServiceEvents: true
+      IsLogging: true
+      IsMultiRegionTrail: true
+      EnableLogFileValidation: true
+      EventSelectors:
+        - ReadWriteType: All
+          IncludeManagementEvents: true
+          DataResources:
+            - Type: 'AWS::Bedrock::*'
+              Values: ['*']
+      InsightSelectors:
+        - InsightType: ApiCallRateInsight
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Purpose
+          Value: BedrockMonitoring
+
+  # CloudWatch Log Groups
+  BedrockApplicationLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/bedrock/application-logs/${Environment}'
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  BedrockCloudTrailLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/bedrock/cloudtrail-logs/${Environment}'
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  BedrockModelInvocationLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/bedrock/model-invocations/${Environment}'
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  BedrockSecurityLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/bedrock/security-events/${Environment}'
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  # SNS Topic for Alerts
+  BedrockMonitoringTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub 'bedrock-monitoring-alerts-${Environment}'
+      DisplayName: 'Bedrock Monitoring Alerts'
+
+  BedrockMonitoringTopicSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      TopicArn: !Ref BedrockMonitoringTopic
+      Endpoint: !Ref AlertEmail
+
+  # IAM Role for Bedrock Monitoring
+  BedrockMonitoringRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'BedrockMonitoringRole-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+                - events.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: BedrockMonitoringPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:*
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                  - cloudwatch:PutMetricData
+                  - cloudwatch:GetMetricStatistics
+                  - cloudwatch:ListMetrics
+                  - sns:Publish
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource: '*'
+
+  # Custom Metrics Lambda Function
+  BedrockCustomMetricsLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'bedrock-custom-metrics-${Environment}'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt BedrockMonitoringRole.Arn
+      Timeout: 300
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          SNS_TOPIC_ARN: !Ref BedrockMonitoringTopic
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime, timedelta
+          
+          def lambda_handler(event, context):
+              # Placeholder for custom metrics collection
+              print("Custom metrics collection function")
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps('Custom metrics collected successfully')
+              }
+
+  # EventBridge Rule for periodic metrics collection
+  BedrockMetricsCollectionRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub 'bedrock-metrics-collection-${Environment}'
+      Description: 'Trigger custom metrics collection for Bedrock'
+      ScheduleExpression: 'rate(5 minutes)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt BedrockCustomMetricsLambda.Arn
+          Id: BedrockCustomMetricsTarget
+
+  # Permission for EventBridge to invoke Lambda
+  BedrockMetricsLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref BedrockCustomMetricsLambda
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt BedrockMetricsCollectionRule.Arn
+
+  # CloudWatch Alarms
+  BedrockHighErrorRateAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'Bedrock-High-Error-Rate-${Environment}'
+      AlarmDescription: 'High error rate detected in Bedrock API calls'
+      MetricName: Errors
+      Namespace: AWS/Bedrock
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 10
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !Ref BedrockMonitoringTopic
+
+  BedrockHighLatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'Bedrock-High-Latency-${Environment}'
+      AlarmDescription: 'High latency detected in Bedrock API calls'
+      MetricName: Duration
+      Namespace: AWS/Bedrock
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 30000
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !Ref BedrockMonitoringTopic
+
+  BedrockUnusualActivityAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'Bedrock-Unusual-Activity-${Environment}'
+      AlarmDescription: 'Unusual activity pattern detected in Bedrock usage'
+      MetricName: Invocations
+      Namespace: AWS/Bedrock
+      Statistic: Sum
+      Period: 900
+      EvaluationPeriods: 1
+      Threshold: 1000
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !Ref BedrockMonitoringTopic
+
+Outputs:
+  CloudTrailBucket:
+    Description: 'S3 Bucket for CloudTrail logs'
+    Value: !Ref BedrockCloudTrailBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-CloudTrailBucket'
+
+  SNSTopicArn:
+    Description: 'SNS Topic ARN for monitoring alerts'
+    Value: !Ref BedrockMonitoringTopic
+    Export:
+      Name: !Sub '${AWS::StackName}-SNSTopic'
+
+  MonitoringRoleArn:
+    Description: 'IAM Role ARN for monitoring resources'
+    Value: !GetAtt BedrockMonitoringRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-MonitoringRole'
+
+  ApplicationLogGroup:
+    Description: 'CloudWatch Log Group for application logs'
+    Value: !Ref BedrockApplicationLogGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-ApplicationLogGroup'
