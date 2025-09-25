@@ -32,8 +32,10 @@ def create_architecture_diagram():
     }
     
     # Title
-    ax.text(10, 13.5, 'AWS Bedrock Comprehensive Monitoring Architecture', 
+    ax.text(10, 13.5, 'AWS Bedrock Enhanced Monitoring & Logging Architecture', 
             fontsize=24, fontweight='bold', ha='center', color=colors['aws_blue'])
+    ax.text(10, 13, 'CloudTrail + CloudWatch + Bedrock Native Logging Integration', 
+            fontsize=14, fontweight='normal', ha='center', color=colors['gray'], style='italic')
     
     # Define component positions and sizes
     components = {
@@ -45,11 +47,13 @@ def create_architecture_diagram():
         # AWS Bedrock Services
         'bedrock_runtime': {'pos': (2, 9), 'size': (3, 1), 'label': 'AWS Bedrock\nRuntime API'},
         'bedrock_models': {'pos': (6, 9), 'size': (3, 1), 'label': 'Bedrock Foundation\nModels'},
+        'bedrock_logging': {'pos': (10, 9), 'size': (2.5, 1), 'label': 'Bedrock Model\nInvocation Logging'},
         
         # Monitoring Infrastructure
-        'cloudtrail': {'pos': (1, 7), 'size': (2.5, 1), 'label': 'AWS CloudTrail\n(API Logging)'},
-        'cloudwatch': {'pos': (4.5, 7), 'size': (2.5, 1), 'label': 'Amazon CloudWatch\n(Metrics & Logs)'},
-        'lambda_monitor': {'pos': (8, 7), 'size': (2.5, 1), 'label': 'Lambda Functions\n(Custom Metrics)'},
+        'cloudtrail': {'pos': (0.5, 7), 'size': (2.2, 1), 'label': 'AWS CloudTrail\n(API Logging)'},
+        'cloudwatch': {'pos': (3.2, 7), 'size': (2.2, 1), 'label': 'Amazon CloudWatch\n(Metrics & Logs)'},
+        'bedrock_native_logs': {'pos': (5.9, 7), 'size': (2.2, 1), 'label': 'Bedrock Native\nLogging Config'},
+        'lambda_monitor': {'pos': (8.6, 7), 'size': (2.2, 1), 'label': 'Lambda Functions\n(Custom Metrics)'},
         
         # Storage
         's3_logs': {'pos': (1, 5), 'size': (2, 1), 'label': 'S3 Bucket\n(Log Storage)'},
@@ -119,15 +123,19 @@ def create_architecture_diagram():
         ('mobile_app', 'bedrock_runtime'),
         ('api_clients', 'bedrock_models'),
         
-        # Bedrock to Monitoring
+        # Bedrock to Monitoring (Enhanced with Native Logging)
         ('bedrock_runtime', 'cloudtrail'),
         ('bedrock_runtime', 'cloudwatch'),
+        ('bedrock_runtime', 'bedrock_native_logs'),
         ('bedrock_models', 'cloudwatch'),
+        ('bedrock_models', 'bedrock_native_logs'),
         ('bedrock_models', 'lambda_monitor'),
+        ('bedrock_logging', 'bedrock_native_logs'),
         
         # Monitoring to Storage
         ('cloudtrail', 's3_logs'),
         ('cloudwatch', 'log_groups'),
+        ('bedrock_native_logs', 'log_groups'),
         ('lambda_monitor', 's3_reports'),
         
         # Storage to Analytics
@@ -140,6 +148,8 @@ def create_architecture_diagram():
         ('cloudwatch', 'mgmt_dashboard'),
         ('cloudwatch', 'security_dashboard'),
         ('cloudwatch', 'cost_dashboard'),
+        ('bedrock_native_logs', 'tech_dashboard'),
+        ('bedrock_native_logs', 'security_dashboard'),
         
         # Monitoring to Alerting
         ('lambda_monitor', 'sns'),
@@ -224,7 +234,8 @@ def create_architecture_diagram():
     metrics_text = """Key Monitoring Metrics:
     • API Invocations & Success Rate  • Token Usage & Cost Analysis
     • Response Times & Performance   • User Behavior & Access Patterns
-    • Error Rates & Types           • Security Events & Anomalies"""
+    • Error Rates & Types           • Security Events & Anomalies
+    • Native Model Invocation Logs  • Request/Response Payloads"""
     
     ax.text(15, 11.75, metrics_text, ha='center', va='center', fontsize=10,
             bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8))

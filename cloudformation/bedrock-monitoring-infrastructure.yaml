@@ -280,6 +280,80 @@ Resources:
       AlarmActions:
         - !Ref BedrockMonitoringTopic
 
+  # Bedrock Model Invocation Logging Configuration
+  BedrockModelInvocationLoggingConfig:
+    Type: AWS::Bedrock::ModelInvocationLoggingConfiguration
+    Properties:
+      LoggingConfig:
+        CloudWatchConfig:
+          LogGroupName: !Ref BedrockModelInvocationLogGroup
+          RoleArn: !GetAtt BedrockLoggingRole.Arn
+        S3Config:
+          BucketName: !Ref BedrockModelInvocationBucket
+          KeyPrefix: !Sub 'model-invocations/${Environment}/'
+        TextDataDeliveryEnabled: true
+        ImageDataDeliveryEnabled: true
+        EmbeddingDataDeliveryEnabled: true
+
+  # S3 Bucket for Bedrock Model Invocation Logs
+  BedrockModelInvocationBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'bedrock-model-invocations-${Environment}-${AWS::AccountId}'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldInvocationLogs
+            Status: Enabled
+            ExpirationInDays: !Ref CloudWatchLogRetentionDays
+
+  # IAM Role for Bedrock Logging
+  BedrockLoggingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'BedrockLoggingRole-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: bedrock.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: BedrockLoggingPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                Resource: !GetAtt BedrockModelInvocationLogGroup.Arn
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetBucketLocation
+                Resource: 
+                  - !GetAtt BedrockModelInvocationBucket.Arn
+                  - !Sub '${BedrockModelInvocationBucket}/*'
+
+  # CloudWatch Log Stream for Bedrock Model Invocations
+  BedrockModelInvocationLogStream:
+    Type: AWS::Logs::LogStream
+    Properties:
+      LogGroupName: !Ref BedrockModelInvocationLogGroup
+      LogStreamName: !Sub 'bedrock-invocations-${Environment}'
+
 Outputs:
   CloudTrailBucket:
     Description: 'S3 Bucket for CloudTrail logs'
@@ -304,3 +378,21 @@ Outputs:
     Value: !Ref BedrockApplicationLogGroup
     Export:
       Name: !Sub '${AWS::StackName}-ApplicationLogGroup'
+
+  ModelInvocationLogGroup:
+    Description: 'CloudWatch Log Group for Bedrock model invocations'
+    Value: !Ref BedrockModelInvocationLogGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-ModelInvocationLogGroup'
+
+  ModelInvocationBucket:
+    Description: 'S3 Bucket for Bedrock model invocation logs'  
+    Value: !Ref BedrockModelInvocationBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-ModelInvocationBucket'
+
+  BedrockLoggingRoleArn:
+    Description: 'IAM Role ARN for Bedrock logging'
+    Value: !GetAtt BedrockLoggingRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-BedrockLoggingRole'

@@ -89,6 +89,27 @@ if %errorlevel% neq 0 (
 )
 echo [INFO] Dashboards stack deployed successfully!
 
+REM Function to enable Bedrock logging
+echo [INFO] Enabling AWS Bedrock model invocation logging...
+
+REM Check if Python script exists
+if exist "..\python-scripts\enable_bedrock_logging.py" (
+    cd ..\python-scripts
+    python enable_bedrock_logging.py --region %REGION% --environment !ENV_VALUE!
+    cd ..\cloudformation
+    
+    if !errorlevel! equ 0 (
+        echo [INFO] ✅ Bedrock logging enabled successfully!
+    ) else (
+        echo [WARNING] ⚠️  Failed to enable Bedrock logging automatically.
+        echo [WARNING] You can enable it manually by running:
+        echo [WARNING]   cd python-scripts ^&^& python enable_bedrock_logging.py --region %REGION% --environment !ENV_VALUE!
+    )
+) else (
+    echo [WARNING] ⚠️  Bedrock logging script not found. Please run manually:
+    echo [WARNING]   cd python-scripts ^&^& python enable_bedrock_logging.py --region %REGION% --environment !ENV_VALUE!
+)
+
 REM Function to get stack outputs
 echo [INFO] Retrieving stack outputs...
 

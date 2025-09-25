@@ -1,14 +1,16 @@
-# AWS Bedrock Comprehensive Monitoring Solution
+# AWS Bedrock Enhanced Monitoring & Logging Solution
 
 [![AWS](https://img.shields.io/badge/AWS-Bedrock-orange)](https://aws.amazon.com/bedrock/)
 [![CloudFormation](https://img.shields.io/badge/Infrastructure-CloudFormation-blue)](https://aws.amazon.com/cloudformation/)
 [![Python](https://img.shields.io/badge/Analytics-Python-green)](https://www.python.org/)
 [![Monitoring](https://img.shields.io/badge/Monitoring-CloudWatch-yellow)](https://aws.amazon.com/cloudwatch/)
+[![Logging](https://img.shields.io/badge/Logging-Enhanced-purple)](https://docs.aws.amazon.com/bedrock/latest/userguide/model-invocation-logging.html)
 
 ## 📋 Table of Contents
 
 - [Overview](#overview)
 - [Architecture](#architecture)
+- [Enhanced Logging Features](#enhanced-logging-features)
 - [Key Features](#key-features)
 - [Monitoring Scope](#monitoring-scope)
 - [Prerequisites](#prerequisites)
@@ -26,19 +28,32 @@
 
 ## 🎯 Overview
 
-This comprehensive monitoring solution for AWS Bedrock provides enterprise-grade observability, security auditing, and cost management capabilities. Designed following AWS Well-Architected Framework principles, it enables organizations to:
+This enhanced monitoring solution for AWS Bedrock provides enterprise-grade observability, security auditing, and cost management capabilities with **triple-layer logging integration**. Designed following AWS Well-Architected Framework principles, it enables organizations to:
 
 - **Monitor** Bedrock service usage patterns and performance
-- **Audit** user behavior and security events
+- **Audit** user behavior and security events with CloudTrail
+- **Log** model invocations natively with Bedrock's built-in logging
+- **Track** detailed metrics through CloudWatch integration  
 - **Optimize** costs through detailed usage analytics
 - **Alert** on anomalies and performance issues
 - **Report** to stakeholders with automated insights
+
+### 🔍 Triple-Layer Logging Architecture
+
+This solution implements a comprehensive three-tier logging strategy:
+
+1. **📋 CloudTrail Logging** - API-level audit trails for security and compliance
+2. **📊 CloudWatch Logging** - Performance metrics and operational insights  
+3. **🎯 Bedrock Native Logging** - Model invocation details with request/response payloads
 
 ### 🏗️ Solution Components
 
 | Component | Purpose | Technology |
 |-----------|---------|------------|
 | **Infrastructure** | Core monitoring setup | CloudFormation |
+| **Native Logging** | Bedrock model invocation logs | Bedrock Model Invocation Logging |
+| **API Logging** | Security & compliance auditing | CloudTrail |
+| **Operational Monitoring** | Performance & metrics | CloudWatch |
 | **Dashboards** | Multi-stakeholder views | CloudWatch Dashboards |
 | **Analytics** | Custom metrics & insights | Python + Lambda |
 | **Alerting** | Proactive notifications | SNS + CloudWatch Alarms |
@@ -66,6 +81,48 @@ The solution processes data through multiple stages:
 - **Real-time**: API calls, metrics, alerts (< 5 minutes)
 - **Near real-time**: Log aggregation, processing (5-15 minutes)
 - **Batch**: Daily/weekly reports, trend analysis
+
+## 🔍 Enhanced Logging Features
+
+### 🎯 Bedrock Native Model Invocation Logging
+
+This solution includes comprehensive **Bedrock Model Invocation Logging** that captures detailed request and response data:
+
+#### What Gets Logged:
+- ✅ **Model Invocations**: Every call to Bedrock foundation models
+- ✅ **Request Payloads**: Input prompts, parameters, and configurations
+- ✅ **Response Payloads**: Generated text, tokens used, and metadata
+- ✅ **Performance Metrics**: Latency, throughput, and processing times
+- ✅ **Error Details**: Failed requests with detailed error messages
+- ✅ **User Context**: Identity, session, and application information
+
+#### Logging Destinations:
+- **CloudWatch Logs**: Real-time log streaming and analysis
+- **S3 Bucket**: Long-term storage and compliance archiving
+- **Custom Analytics**: Python-based processing and insights
+
+#### Key Benefits:
+- 🔍 **Deep Visibility**: See exactly what prompts and responses are being processed
+- 🛡️ **Security Monitoring**: Track sensitive data usage and potential leaks
+- 📊 **Usage Analytics**: Understand how models are being utilized
+- 💰 **Cost Attribution**: Precise token usage tracking per user/application
+- 🚨 **Anomaly Detection**: Identify unusual patterns in model usage
+
+### 📋 CloudTrail Integration
+
+Comprehensive API-level logging for security and compliance:
+- All Bedrock API calls (InvokeModel, ListFoundationModels, etc.)
+- Administrative actions (CreateModel, UpdateModel, etc.)
+- User authentication and authorization events
+- Cross-service interactions and dependencies
+
+### 📊 CloudWatch Metrics & Logs
+
+Operational monitoring and performance insights:
+- Real-time metrics dashboards and custom alarms
+- Log aggregation from Lambda functions and applications
+- Performance monitoring and threshold-based alerting
+- Integration with AWS X-Ray for distributed tracing
 
 ## ✨ Key Features
 
@@ -228,7 +285,28 @@ aws cloudformation deploy \
   --region us-east-1
 ```
 
-### Step 2: Python Environment Setup
+### Step 2: Enable Bedrock Native Logging
+
+#### Automatic Enablement via CloudFormation
+The infrastructure deployment automatically configures:
+- Bedrock Model Invocation Logging Configuration
+- CloudWatch Log Group for Bedrock logs
+- S3 bucket for long-term log storage
+- IAM roles with necessary permissions
+
+#### Manual Verification & Configuration
+```bash
+cd python-scripts
+python enable_bedrock_logging.py --enable
+```
+
+This script will:
+- ✅ Verify Bedrock logging configuration
+- ✅ Enable model invocation logging if not already active
+- ✅ Configure log destinations (CloudWatch + S3)
+- ✅ Test logging functionality
+
+### Step 3: Python Environment Setup
 
 #### Install Dependencies
 ```bash

@@ -127,6 +127,32 @@ get_outputs() {
         --output table
 }
 
+# Function to enable Bedrock logging
+enable_bedrock_logging() {
+    print_status "Enabling AWS Bedrock model invocation logging..."
+    
+    # Get the environment from parameters
+    ENV=$(cat $PARAMETERS_FILE | jq -r '.[] | select(.ParameterKey=="Environment") | .ParameterValue')
+    
+    # Check if Python script exists
+    if [ -f "../python-scripts/enable_bedrock_logging.py" ]; then
+        cd ../python-scripts
+        python enable_bedrock_logging.py --region $REGION --environment $ENV
+        cd ../cloudformation
+        
+        if [ $? -eq 0 ]; then
+            print_status "Bedrock logging enabled successfully!"
+        else
+            print_warning "Failed to enable Bedrock logging automatically."
+            print_warning "You can enable it manually by running:"
+            print_warning "  cd python-scripts && python enable_bedrock_logging.py --region $REGION --environment $ENV"
+        fi
+    else
+        print_warning "Bedrock logging script not found. Please run manually:"
+        print_warning "  cd python-scripts && python enable_bedrock_logging.py --region $REGION --environment $ENV"
+    fi
+}
+
 # Function to setup CloudWatch Log Insights queries
 setup_log_insights() {
     print_status "Setting up CloudWatch Log Insights saved queries..."
@@ -163,6 +189,7 @@ main() {
     validate_parameters
     deploy_infrastructure
     deploy_dashboards
+    enable_bedrock_logging
     get_outputs
     setup_log_insights
     
