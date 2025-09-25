@@ -1,8 +1,11 @@
-# AWS Bedrock Monitoring Solution - Requirements
-# Install these packages in your Python environment
+# AWS Bedrock Monitoring Solution - Local Development Requirements
+# Install these packages for LOCAL development and reporting scripts
 # Requires Python 3.10 or higher
 
+# Core AWS libraries (also available in Lambda by default)
 boto3>=1.34.0
+
+# Data analysis and reporting libraries (LOCAL ONLY - not needed for Lambda)
 pandas>=2.0.0
 matplotlib>=3.8.0
 seaborn>=0.13.0
@@ -11,8 +14,10 @@ numpy>=1.24.0
 python-dateutil>=2.8.0
 pytz>=2024.1
 
-# For development and testing
+# Development and testing tools
 pytest>=7.0.0
 moto>=4.2.0
 black>=23.0.0
 flake8>=6.0.0
+
+# Note: Lambda functions only use built-in libraries and boto3 (see requirements-lambda.txt)

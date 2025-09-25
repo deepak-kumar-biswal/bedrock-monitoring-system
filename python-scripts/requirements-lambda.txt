@@ -1,0 +1,20 @@
+# AWS Lambda Requirements
+# These libraries are available by default in AWS Lambda Python 3.12 runtime
+# No additional layers or packaging required
+
+# Built-in AWS Lambda Python 3.12 libraries:
+# - boto3>=1.34.0 (included)
+# - botocore (included)  
+# - json (built-in)
+# - os (built-in)
+# - sys (built-in)
+# - datetime (built-in)
+# - typing (built-in)
+# - logging (built-in)
+# - statistics (built-in)
+# - collections (built-in)
+# - re (built-in)
+# - base64 (built-in)
+# - io (built-in)
+
+# No additional dependencies required for Lambda functions

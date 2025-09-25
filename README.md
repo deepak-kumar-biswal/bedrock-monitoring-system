@@ -2,7 +2,33 @@
 
 [![AWS](https://img.shields.io/badge/AWS-Bedrock-orange)](https://aws.amazon.com/bedrock/)
 [![CloudFormation](https://img.shields.io/badge/Infrastructure-CloudFormation-blue)](https://aws.amazon.com/cloudformation/)
-[![Python](https://img.shields.io/badge/Analytics-Python-green)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/An#### Configure Environment Variables
+```bash
+export AWS_REGION=us-east-1
+export ENVIRONMENT=prod
+export SNS_TOPIC_ARN=arn:aws:sns:us-east-1:123456789012:bedrock-monitoring-alerts-prod
+export REPORT_BUCKET=bedrock-monitoring-reports-prod
+export SENDER_EMAIL=noreply@yourcompany.com
+```
+
+### Step 4: Lambda Dependencies
+
+#### ✅ **No Lambda Layers Required!**
+
+Our Lambda functions are optimized to use **only built-in libraries** available in AWS Lambda Python 3.12 runtime:
+
+**Available by default:**
+- `boto3` & `botocore` (AWS SDK)
+- `json`, `os`, `datetime`, `logging`
+- `typing`, `statistics`, `collections`
+
+**Dependency Strategy:**
+- **Lambda functions**: Lightweight, built-in libraries only
+- **Local scripts**: Full data science stack (pandas, matplotlib, etc.)
+
+For complete details, see: [`docs/LAMBDA_DEPENDENCIES.md`](docs/LAMBDA_DEPENDENCIES.md)
+
+### Step 5: Lambda Function Deploymentthon-green)](https://www.python.org/)
 [![Monitoring](https://img.shields.io/badge/Monitoring-CloudWatch-yellow)](https://aws.amazon.com/cloudwatch/)
 [![Logging](https://img.shields.io/badge/Logging-Enhanced-purple)](https://docs.aws.amazon.com/bedrock/latest/userguide/model-invocation-logging.html)
 

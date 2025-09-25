@@ -186,6 +186,7 @@ Resources:
                 Resource: '*'
 
   # Custom Metrics Lambda Function
+  # Note: Uses only built-in Python libraries - no Lambda layers required
   BedrockCustomMetricsLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -200,6 +201,7 @@ Resources:
           SNS_TOPIC_ARN: !Ref BedrockMonitoringTopic
       Code:
         ZipFile: |
+          # Lambda function using only built-in libraries
           import json
           import boto3
           import os
