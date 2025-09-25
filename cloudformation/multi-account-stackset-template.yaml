@@ -1,0 +1,328 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Multi-Account Bedrock Monitoring StackSet Template'
+
+Parameters:
+  SecurityHubAccountId:
+    Type: String
+    Description: Account ID of the central Security/Logging Hub account
+    AllowedPattern: '^[0-9]{12}$'
+  
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues: [dev, staging, prod, sandbox]
+    Description: Environment name for this account
+    
+  AlertEmail:
+    Type: String
+    Description: Email address for account-specific alerts
+    AllowedPattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+    
+  ComplianceRequirement:
+    Type: String
+    Default: 'PCI'
+    AllowedValues: ['SOC2', 'PCI', 'HIPAA', 'GDPR', 'None']
+    Description: Compliance framework requirements
+
+Conditions:
+  IsProductionAccount: !Equals [!Ref Environment, 'prod']
+  RequiresCompliance: !Not [!Equals [!Ref ComplianceRequirement, 'None']]
+
+Resources:
+  # Account-specific Bedrock monitoring with cross-account log streaming
+  LocalBedrockLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/bedrock/model-invocations-${Environment}'
+      RetentionInDays: !If [IsProductionAccount, 90, 30]
+      KmsKeyId: !Ref BedrockLogsKMSKey
+
+  # KMS Key for Bedrock logs encryption
+  BedrockLogsKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub 'KMS Key for Bedrock logs in ${Environment} account'
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: Allow CloudWatch Logs
+            Effect: Allow
+            Principal:
+              Service: !Sub 'logs.${AWS::Region}.amazonaws.com'
+            Action:
+              - 'kms:Encrypt'
+              - 'kms:Decrypt'
+              - 'kms:ReEncrypt*'
+              - 'kms:GenerateDataKey*'
+              - 'kms:DescribeKey'
+            Resource: '*'
+          - Sid: Allow Cross-Account Access from Security Hub
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${SecurityHubAccountId}:root'
+            Action:
+              - 'kms:Decrypt'
+              - 'kms:DescribeKey'
+            Resource: '*'
+
+  BedrockLogsKMSKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub 'alias/bedrock-logs-${Environment}'
+      TargetKeyId: !Ref BedrockLogsKMSKey
+
+  # Cross-account log destination for Security Hub
+  CrossAccountLogDestination:
+    Type: AWS::Logs::Destination
+    Properties:
+      DestinationName: !Sub 'bedrock-logs-to-security-hub-${Environment}'
+      RoleArn: !GetAtt CrossAccountLogRole.Arn
+      TargetArn: !Sub 'arn:aws:logs:${AWS::Region}:${SecurityHubAccountId}:log-group:/enterprise/bedrock/aggregated-logs'
+      DestinationPolicy: !Sub |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${SecurityHubAccountId}:root"
+              },
+              "Action": "logs:PutSubscriptionFilter",
+              "Resource": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:destination:bedrock-logs-to-security-hub-${Environment}"
+            }
+          ]
+        }
+
+  CrossAccountLogRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'BedrockCrossAccountLogRole-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: !Sub 'logs.${AWS::Region}.amazonaws.com'
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: CrossAccountLogDelivery
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:PutLogEvents'
+                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${SecurityHubAccountId}:log-group:/enterprise/bedrock/aggregated-logs:*'
+
+  # Subscription filter to stream logs to Security Hub
+  CrossAccountLogSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties:
+      LogGroupName: !Ref LocalBedrockLogGroup
+      FilterPattern: ''
+      DestinationArn: !GetAtt CrossAccountLogDestination.Arn
+
+  # Account-specific Bedrock Model Invocation Logging
+  BedrockModelInvocationLoggingConfig:
+    Type: AWS::Bedrock::ModelInvocationLoggingConfiguration
+    Properties:
+      LoggingConfig:
+        CloudWatchConfig:
+          LogGroupName: !Ref LocalBedrockLogGroup
+          RoleArn: !GetAtt BedrockLoggingRole.Arn
+        S3Config:
+          BucketName: !Ref BedrockModelInvocationBucket
+          KeyPrefix: !Sub 'account-${AWS::AccountId}/${Environment}/model-invocations/'
+        TextDataDeliveryEnabled: true
+        ImageDataDeliveryEnabled: !If [IsProductionAccount, true, false]
+        EmbeddingDataDeliveryEnabled: true
+
+  BedrockLoggingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'BedrockLoggingRole-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: bedrock.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonBedrockLoggingPolicy'
+      Policies:
+        - PolicyName: BedrockCustomLoggingPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                  - 'logs:DescribeLogGroups'
+                  - 'logs:DescribeLogStreams'
+                Resource: !GetAtt LocalBedrockLogGroup.Arn
+              - Effect: Allow
+                Action:
+                  - 's3:PutObject'
+                  - 's3:GetBucketLocation'
+                Resource:
+                  - !GetAtt BedrockModelInvocationBucket.Arn
+                  - !Sub '${BedrockModelInvocationBucket}/*'
+
+  BedrockModelInvocationBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'bedrock-logs-${Environment}-${AWS::AccountId}-${AWS::Region}'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'aws:kms'
+              KMSMasterKeyID: !Ref BedrockLogsKMSKey
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: BedrockLogsRetention
+            Status: Enabled
+            ExpirationInDays: !If [IsProductionAccount, 2555, 365]  # 7 years for prod, 1 year for others
+            Transitions:
+              - TransitionInDays: 30
+                StorageClass: STANDARD_IA
+              - TransitionInDays: 90
+                StorageClass: GLACIER
+              - TransitionInDays: 365
+                StorageClass: DEEP_ARCHIVE
+      NotificationConfiguration:
+        CloudWatchConfigurations:
+          - Event: 's3:ObjectCreated:*'
+            CloudWatchConfiguration:
+              LogGroupName: !Ref LocalBedrockLogGroup
+
+  # AWS Config Rules for Bedrock Compliance
+  BedrockLoggingEnabledConfigRule:
+    Type: AWS::Config::ConfigRule
+    Condition: RequiresCompliance
+    Properties:
+      ConfigRuleName: !Sub 'bedrock-logging-enabled-${Environment}'
+      Description: 'Checks if Bedrock model invocation logging is enabled'
+      Source:
+        Owner: AWS
+        SourceIdentifier: 'BEDROCK_MODEL_INVOCATION_LOGGING_ENABLED'
+      DependsOn: BedrockModelInvocationLoggingConfig
+
+  # Enhanced CloudTrail for Bedrock API calls
+  BedrockCloudTrail:
+    Type: AWS::CloudTrail::Trail
+    Properties:
+      TrailName: !Sub 'bedrock-api-trail-${Environment}'
+      S3BucketName: !Ref BedrockModelInvocationBucket
+      S3KeyPrefix: !Sub 'cloudtrail-logs/${Environment}/'
+      IncludeGlobalServiceEvents: true
+      IsLogging: true
+      IsMultiRegionTrail: true
+      EnableLogFileValidation: true
+      KMSKeyId: !Ref BedrockLogsKMSKey
+      EventSelectors:
+        - ReadWriteType: All
+          IncludeManagementEvents: true
+          DataResources:
+            - Type: 'AWS::Bedrock::*'
+              Values: ['*']
+      InsightSelectors:
+        - InsightType: ApiCallRateInsight
+
+  # Bedrock Guardrails (Enterprise Content Filtering)
+  BedrockGuardrail:
+    Type: AWS::Bedrock::Guardrail
+    Properties:
+      Name: !Sub 'enterprise-guardrail-${Environment}'
+      Description: !Sub 'Enterprise-level content filtering for ${Environment} environment'
+      BlockedInputMessaging: 'This content violates our enterprise policy and cannot be processed.'
+      BlockedOutputsMessaging: 'The generated content violates our enterprise policy and has been blocked.'
+      ContentPolicyConfig:
+        FiltersConfig:
+          - Type: SEXUAL
+            InputStrength: HIGH
+            OutputStrength: HIGH
+          - Type: VIOLENCE
+            InputStrength: HIGH
+            OutputStrength: HIGH
+          - Type: HATE
+            InputStrength: HIGH
+            OutputStrength: HIGH
+          - Type: INSULTS
+            InputStrength: MEDIUM
+            OutputStrength: MEDIUM
+          - Type: MISCONDUCT
+            InputStrength: HIGH
+            OutputStrength: HIGH
+          - Type: PROMPT_ATTACK
+            InputStrength: HIGH
+            OutputStrength: NONE
+      SensitiveInformationPolicyConfig:
+        PiiEntitiesConfig:
+          - Type: EMAIL
+            Action: BLOCK
+          - Type: PHONE
+            Action: BLOCK
+          - Type: SSN
+            Action: BLOCK
+          - Type: CREDIT_DEBIT_CARD_NUMBER
+            Action: BLOCK
+          - Type: AWS_ACCESS_KEY
+            Action: BLOCK
+          - Type: AWS_SECRET_KEY
+            Action: BLOCK
+        RegexesConfig:
+          - Name: 'API_KEYS'
+            Description: 'Block API keys and tokens'
+            Pattern: '(?i)(api[_-]?key|token|secret)[_-]?[:=][_-]?[a-zA-Z0-9]{10,}'
+            Action: BLOCK
+      WordPolicyConfig:
+        WordsConfig:
+          - Text: 'confidential'
+        ManagedWordListsConfig:
+          - Type: PROFANITY
+      TopicPolicyConfig:
+        TopicsConfig:
+          - Name: 'Financial_Advice'
+            Definition: 'Content providing specific financial, investment, or trading advice'
+            Examples:
+              - 'You should invest in this stock'
+              - 'Buy cryptocurrency now'
+            Type: DENY
+
+Outputs:
+  BedrockLogGroup:
+    Description: 'Bedrock model invocation log group'
+    Value: !Ref LocalBedrockLogGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-BedrockLogGroup'
+
+  BedrockGuardrailId:
+    Description: 'Bedrock Guardrail ID for enforcement'
+    Value: !GetAtt BedrockGuardrail.GuardrailId
+    Export:
+      Name: !Sub '${AWS::StackName}-BedrockGuardrailId'
+
+  BedrockGuardrailVersion:
+    Description: 'Bedrock Guardrail Version'
+    Value: !GetAtt BedrockGuardrail.Version
+    Export:
+      Name: !Sub '${AWS::StackName}-BedrockGuardrailVersion'
+
+  S3BucketName:
+    Description: 'S3 Bucket for Bedrock logs'
+    Value: !Ref BedrockModelInvocationBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-S3Bucket'

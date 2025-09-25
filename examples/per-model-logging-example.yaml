@@ -1,0 +1,31 @@
+# Per-Model Logging Enhancement Example
+# This would be added to CloudFormation for model-specific log groups
+
+# Claude Models Log Group
+ClaudeModelsLogGroup:
+  Type: AWS::Logs::LogGroup
+  Properties:
+    LogGroupName: !Sub '/aws/bedrock/claude-models-${Environment}'
+    RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+# Titan Models Log Group  
+TitanModelsLogGroup:
+  Type: AWS::Logs::LogGroup
+  Properties:
+    LogGroupName: !Sub '/aws/bedrock/titan-models-${Environment}'
+    RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+# Log Subscription Filters for Model-Specific Routing
+ClaudeLogFilter:
+  Type: AWS::Logs::SubscriptionFilter
+  Properties:
+    LogGroupName: !Ref BedrockModelInvocationLogGroup
+    FilterPattern: '{ $.modelId = "*claude*" }'
+    DestinationArn: !GetAtt ClaudeModelsLogGroup.Arn
+
+TitanLogFilter:
+  Type: AWS::Logs::SubscriptionFilter  
+  Properties:
+    LogGroupName: !Ref BedrockModelInvocationLogGroup
+    FilterPattern: '{ $.modelId = "*titan*" }'
+    DestinationArn: !GetAtt TitanModelsLogGroup.Arn

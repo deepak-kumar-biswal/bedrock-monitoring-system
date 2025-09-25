@@ -1,0 +1,98 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "EnforceBedockLoggingRequirement",
+      "Effect": "Deny",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "Bool": {
+          "bedrock:ModelInvocationLoggingEnabled": "false"
+        }
+      }
+    },
+    {
+      "Sid": "RestrictBedockModelsToApprovedList",
+      "Effect": "Deny",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "ForAllValues:StringNotLike": {
+          "bedrock:ModelId": [
+            "anthropic.claude-3-sonnet-*",
+            "anthropic.claude-3-haiku-*",
+            "amazon.titan-text-*",
+            "amazon.titan-embed-*"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "EnforceGuardrailsUsage",
+      "Effect": "Deny",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "Null": {
+          "bedrock:GuardrailIdentifier": "true"
+        }
+      }
+    },
+    {
+      "Sid": "RestrictBedockRegions",
+      "Effect": "Deny",
+      "Action": "bedrock:*",
+      "Resource": "*",
+      "Condition": {
+        "StringNotEquals": {
+          "aws:RequestedRegion": [
+            "us-east-1",
+            "us-west-2",
+            "eu-west-1"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "PreventLoggingDisabling",
+      "Effect": "Deny",
+      "Action": [
+        "bedrock:DeleteModelInvocationLoggingConfiguration",
+        "bedrock:PutModelInvocationLoggingConfiguration"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEquals": {
+          "aws:PrincipalArn": [
+            "arn:aws:iam::*:role/BedrockAdminRole",
+            "arn:aws:iam::*:role/OrganizationAccountAccessRole"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "EnforceCostControls",
+      "Effect": "Deny",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "NumericGreaterThan": {
+          "bedrock:InputTokenCount": "10000"
+        }
+      }
+    }
+  ]
+}

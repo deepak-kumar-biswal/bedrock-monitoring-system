@@ -1,0 +1,275 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Central Security Hub Account - Bedrock Enterprise Monitoring'
+
+Parameters:
+  OrganizationId:
+    Type: String
+    Description: AWS Organization ID for cross-account access
+  
+  MemberAccountIds:
+    Type: CommaDelimitedList
+    Description: List of member account IDs that will send logs
+
+Resources:
+  # Central log group for aggregated Bedrock logs from all accounts
+  EnterpriseBedrockLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: '/enterprise/bedrock/aggregated-logs'
+      RetentionInDays: 2555  # 7 years retention for enterprise
+      KmsKeyId: !Ref EnterpriseLogsKMSKey
+
+  # KMS Key for enterprise logs
+  EnterpriseLogsKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: 'Enterprise KMS Key for centralized Bedrock logs'
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: Allow CloudWatch Logs
+            Effect: Allow
+            Principal:
+              Service: !Sub 'logs.${AWS::Region}.amazonaws.com'
+            Action:
+              - 'kms:Encrypt'
+              - 'kms:Decrypt'
+              - 'kms:ReEncrypt*'
+              - 'kms:GenerateDataKey*'
+              - 'kms:DescribeKey'
+            Resource: '*'
+          - Sid: Allow Organization Member Accounts
+            Effect: Allow
+            Principal:
+              AWS: '*'
+            Action:
+              - 'kms:Encrypt'
+              - 'kms:Decrypt'
+              - 'kms:ReEncrypt*'
+              - 'kms:GenerateDataKey*'
+              - 'kms:DescribeKey'
+            Resource: '*'
+            Condition:
+              StringEquals:
+                'aws:PrincipalOrgID': !Ref OrganizationId
+
+  # Central S3 bucket for enterprise Bedrock data
+  EnterpriseBedrockDataLake:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'enterprise-bedrock-datalake-${AWS::AccountId}'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'aws:kms'
+              KMSMasterKeyID: !Ref EnterpriseLogsKMSKey
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: IntelligentTiering
+            Status: Enabled
+            Transitions:
+              - TransitionInDays: 30
+                StorageClass: INTELLIGENT_TIERING
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: 's3:ObjectCreated:*'
+            Function: !GetAtt DataProcessingLambda.Arn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: 'bedrock-logs/'
+
+  # Lambda for processing aggregated data
+  DataProcessingLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: 'enterprise-bedrock-data-processor'
+      Runtime: python3.12
+      Handler: index.lambda_handler
+      Role: !GetAtt DataProcessingLambdaRole.Arn
+      Timeout: 900
+      MemorySize: 1024
+      Environment:
+        Variables:
+          LOG_GROUP_NAME: !Ref EnterpriseBedrockLogGroup
+          DATA_LAKE_BUCKET: !Ref EnterpriseBedrockDataLake
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import gzip
+          import base64
+          from datetime import datetime
+          
+          def lambda_handler(event, context):
+              """Process aggregated Bedrock logs for enterprise insights"""
+              
+              logs_client = boto3.client('logs')
+              s3_client = boto3.client('s3')
+              
+              # Process S3 events from aggregated logs
+              for record in event.get('Records', []):
+                  if record.get('eventSource') == 'aws:s3':
+                      bucket = record['s3']['bucket']['name']
+                      key = record['s3']['object']['key']
+                      
+                      # Extract and analyze log data
+                      response = s3_client.get_object(Bucket=bucket, Key=key)
+                      log_data = response['Body'].read()
+                      
+                      # Decompress if gzipped
+                      if key.endswith('.gz'):
+                          log_data = gzip.decompress(log_data)
+                      
+                      # Parse and process log entries
+                      log_lines = log_data.decode('utf-8').split('\n')
+                      
+                      for line in log_lines:
+                          if line.strip():
+                              try:
+                                  log_entry = json.loads(line)
+                                  # Process enterprise metrics
+                                  process_enterprise_metrics(log_entry)
+                              except json.JSONDecodeError:
+                                  continue
+              
+              return {'statusCode': 200, 'body': json.dumps('Processing completed')}
+          
+          def process_enterprise_metrics(log_entry):
+              """Extract enterprise-level metrics from log entry"""
+              # Add custom enterprise analytics logic here
+              pass
+
+  DataProcessingLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        - PolicyName: EnterpriseDataProcessingPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:*'
+                  - 's3:GetObject'
+                  - 's3:PutObject'
+                  - 'kms:Decrypt'
+                  - 'kms:DescribeKey'
+                Resource: '*'
+
+  # Lambda permission for S3 to invoke
+  S3InvokeLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DataProcessingLambda
+      Action: 'lambda:InvokeFunction'
+      Principal: 's3.amazonaws.com'
+      SourceArn: !GetAtt EnterpriseBedrockDataLake.Arn
+
+  # Enterprise QuickSight Dashboard (placeholder)
+  EnterpriseQuickSightDataSource:
+    Type: AWS::QuickSight::DataSource
+    Properties:
+      AwsAccountId: !Ref AWS::AccountId
+      DataSourceId: 'enterprise-bedrock-datasource'
+      Name: 'Enterprise Bedrock Analytics'
+      Type: 'S3'
+      DataSourceParameters:
+        S3Parameters:
+          ManifestFileLocation:
+            Bucket: !Ref EnterpriseBedrockDataLake
+            Key: 'quicksight-manifest.json'
+
+  # SNS Topic for enterprise alerts
+  EnterpriseAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: 'enterprise-bedrock-alerts'
+      KmsMasterKeyId: !Ref EnterpriseLogsKMSKey
+
+  # CloudWatch Dashboard for enterprise view
+  EnterpriseBedrockDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: 'Enterprise-Bedrock-Overview'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "log",
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '${EnterpriseBedrockLogGroup}'\n| fields @timestamp, accountId, modelId, inputTokenCount, outputTokenCount\n| stats count() by accountId\n| sort count desc",
+                "region": "${AWS::Region}",
+                "title": "Bedrock Usage by Account"
+              }
+            },
+            {
+              "type": "log",
+              "x": 0,
+              "y": 6,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '${EnterpriseBedrockLogGroup}'\n| fields @timestamp, modelId, inputTokenCount\n| stats sum(inputTokenCount) by modelId\n| sort sum desc",
+                "region": "${AWS::Region}",
+                "title": "Token Usage by Model"
+              }
+            },
+            {
+              "type": "log",
+              "x": 12,
+              "y": 6,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '${EnterpriseBedrockLogGroup}'\n| fields @timestamp, accountId\n| filter @message like /error/\n| stats count() by accountId",
+                "region": "${AWS::Region}",
+                "title": "Errors by Account"
+              }
+            }
+          ]
+        }
+
+Outputs:
+  EnterpriseLogGroup:
+    Description: 'Central log group for enterprise Bedrock monitoring'
+    Value: !Ref EnterpriseBedrockLogGroup
+    Export:
+      Name: 'Enterprise-BedrockLogGroup'
+
+  EnterpriseDataLake:
+    Description: 'Central S3 bucket for enterprise Bedrock data'
+    Value: !Ref EnterpriseBedrockDataLake
+    Export:
+      Name: 'Enterprise-BedrockDataLake'
+
+  EnterpriseKMSKey:
+    Description: 'KMS Key for enterprise encryption'
+    Value: !Ref EnterpriseLogsKMSKey
+    Export:
+      Name: 'Enterprise-BedrockKMSKey'
