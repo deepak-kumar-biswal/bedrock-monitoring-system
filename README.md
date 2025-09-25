@@ -196,7 +196,7 @@ Operational monitoring and performance insights:
 - Verified email address for SES (for reporting)
 
 ### Technical Requirements
-- Python 3.9 or higher
+- Python 3.10 or higher
 - Git
 - Bash shell (for deployment scripts)
 - jq (JSON processor)

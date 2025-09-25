@@ -180,8 +180,8 @@ class ConfigValidator:
         """Validate Python environment and dependencies"""
         # Check Python version
         python_version = sys.version_info
-        if python_version < (3, 9):
-            self.errors.append(f"❌ Python 3.9+ required, found {python_version.major}.{python_version.minor}")
+        if python_version < (3, 10):
+            self.errors.append(f"❌ Python 3.10+ required, found {python_version.major}.{python_version.minor}")
         else:
             self.success_messages.append(f"✅ Python version {python_version.major}.{python_version.minor} is compatible")
         

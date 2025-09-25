@@ -2,7 +2,7 @@
 
 ## Prerequisites Checklist
 - [ ] AWS CLI installed and configured
-- [ ] Python 3.9+ installed
+- [ ] Python 3.10+ installed
 - [ ] Git installed
 - [ ] Email address verified in SES (for reports)
 - [ ] IAM permissions configured

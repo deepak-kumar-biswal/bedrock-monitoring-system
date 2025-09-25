@@ -190,7 +190,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Sub 'bedrock-custom-metrics-${Environment}'
-      Runtime: python3.9
+      Runtime: python3.12
       Handler: index.lambda_handler
       Role: !GetAtt BedrockMonitoringRole.Arn
       Timeout: 300
