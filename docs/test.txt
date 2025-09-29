@@ -1,0 +1,97 @@
+1. Introduction & Objectives
+
+Why We Need a New IAM Automation System
+
+Complex Troubleshooting: Current system spans multiple AWS services (CodePipeline, S3, DynamoDB, Step Functions, Lambda, CloudFormation), creating multi-point failures and making issue resolution slow and difficult.
+
+Stack Naming Conflicts: Default CloudFormation naming can overwrite IAM roles if not explicitly defined in JSON files — with no built-in validation.
+
+DynamoDB Constraints: Large CloudFormation event sizes can exceed DynamoDB limits, causing Lambda timeouts.
+
+Region Lock-In: Current solution is tightly coupled to us-east-1, creating challenges in disaster recovery scenarios.
+
+Lack of Modularity: No reusable code or modular design, increasing maintenance overhead.
+
+No Role Deletion Capability: System cannot safely decommission IAM roles, leading to long-term sprawl.
+
+Objective: Deliver a new IAM automation system that is simpler, scalable, provider-agnostic, and audit-ready, resolving these challenges and enabling long-term efficiency.
+
+Slide 2 – Simplified IAM Management
+
+Key Highlights
+
+Unified Pipeline: GitHub Actions + Terraform Cloud replace a complex AWS-native chain with a single auditable flow.
+
+Centralized Error Tracking: All logs and errors consolidated for faster debugging and resolution.
+
+Clear Reporting: Post-merge emails summarize IAM roles created/updated with links to artifacts.
+
+Reusable Modules: Terraform modules provide standardization and scalability across accounts.
+
+Future-Ready: Framework designed to extend beyond AWS to Azure/GCP.
+
+Slide 3 – Robust Migration Framework
+
+Why It Matters
+
+Scale: ~2,300 IAM roles identified across 32 accounts.
+
+Pre-Migration Validation: Schema checks, policy linting, drift detection, and ownership tagging.
+
+Controlled Rollout: Dry runs, approval gates, and phased migration waves ensure safety.
+
+Post-Migration Verification: Automated checks for trust relationships, boundaries, and permissions.
+
+Progress Tracking: Real-time dashboard + automated reporting on migration status.
+
+On Track: 144 roles migrated; 2,200 pending; target completion by Q4 2025.
+
+Slide 4 – Exposing Unused IAM Roles
+
+Why It Matters
+
+Discovery at Scale: Automated system leveraging AWS Config, Lambda, and CloudWatch dashboards.
+
+Findings: ~2,500 unused IAM roles detected (~85/account) across 32 accounts.
+
+Risk Reduction: Dormant roles increase audit exposure and potential security gaps.
+
+Compliance Enablement: Provides visibility and evidence for auditors.
+
+Next Step: Staged disable → delete workflow with approvals to systematically reduce sprawl.
+
+Slide 5 – Proactive IAM User Key Expiry Alerts
+
+Why It Matters
+
+Gap in Vendor Tools: Prisma/Wiz detect expirations but lack Teams-based notifications.
+
+Custom Solution: Built monitoring + notification system integrated with IAM data.
+
+User-Level Alerts: Teams cards sent directly to users with days-to-expiry and “Rotate Key” action.
+
+Manager Oversight: Aggregated email reports delivered to stakeholders.
+
+Impact: Prevents outages, enforces rotation policy, and strengthens compliance posture.
+
+Slide 6 – Impact & Path Forward
+
+Delivered Impact
+
+Simplified IAM provisioning → fewer moving parts, faster troubleshooting.
+
+Robust migration framework → validated, auditable, on track for 2,300+ roles.
+
+Discovery of ~2,500 unused roles → actionable cleanup pipeline.
+
+Proactive expiry notifications → eliminated disruption from expired keys.
+
+Path Forward
+
+Complete IAM role migration by Q4 2025.
+
+Execute staged cleanup of unused roles.
+
+Extend provisioning to Azure/GCP identities.
+
+Broaden proactive notifications to certificates and service accounts.
